@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 // TK Code Studio: local proxy + visual overlay that writes edits back to source.
 // Zero dependencies. Node 18+.
 //
@@ -425,19 +424,20 @@ async function start() {
 
   server.on('error', err => {
     if (err.code === 'EADDRINUSE') {
-      console.warn(`\n  [!] Port ${port} is already running TK Code Studio. Opening browser at http://localhost:${port}...`);
-      openBrowser(`http://localhost:${port}`);
+      console.warn(`\n  [!] Port ${port} is in use. Retrying on dynamic available port...`);
+      server.listen(0, '127.0.0.1');
     } else {
       console.error('  Server error:', err.message);
     }
   });
 
   server.listen(port, '127.0.0.1', () => {
-    console.log(`\n  ⚡ TK Code Studio ready\n  open  http://localhost:${port}   (proxying ${target})\n  edits write to: ${ROOT}\n`);
+    const activePort = server.address().port;
+    console.log(`\n  ⚡ TK Code Studio ready\n  open  http://localhost:${activePort}   (proxying ${target})\n  edits write to: ${ROOT}\n`);
     if (!fs.existsSync(path.join(ROOT, 'run_tk_studio.bat')) && !fs.existsSync(path.join(ROOT, 'run-tk-studio.bat'))) {
       generateRunners();
     }
-    openBrowser(`http://localhost:${port}`);
+    openBrowser(`http://localhost:${activePort}`);
   });
 }
 
@@ -696,8 +696,26 @@ async function main() {
     q.items = ids.length ? q.items.filter(i => !ids.includes(i.id)) : [];
     writeQueue(q);
     console.log('remaining:', q.items.length);
+  } else if (cmd === 'save-payload') {
+    let input = '';
+    process.stdin.on('data', chunk => { input += chunk; });
+    process.stdin.on('end', () => {
+      try {
+        const body = JSON.parse(input);
+        const result = save(body);
+        console.log(JSON.stringify(result));
+      } catch (err) {
+        console.error(JSON.stringify({ error: err.message }));
+      }
+    });
   } else {
     console.log('usage: live.mjs init | start [--target URL] [--port N] | wait | pending | done [ids]');
   }
 }
-main();
+
+const isCLI = process.argv[1] && (path.resolve(process.argv[1]) === path.resolve(fileURLToPath(import.meta.url)));
+if (isCLI) {
+  main();
+}
+
+export { save, applyText, start, detectTarget };

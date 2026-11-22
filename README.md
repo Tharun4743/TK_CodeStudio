@@ -64,8 +64,41 @@ Import and configure the TK Code Studio skill from https://github.com/Tharun4743
 
 #### What happens automatically:
 1. Your AI agent clones/updates `TK_CodeStudio` into your global skills directory.
-2. In **any opened project or folder**, your agent automatically generates **`run_tk_studio.bat`** (Windows) and **`run_tk_studio.sh`** (Unix).
-3. Auto-detects your dev server (or starts the built-in static server) and opens **`http://localhost:4321`** with zero manual setup.
+2. In **any opened project or folder**, your agent automatically configures the runner or single-port Vite dev plugin.
+3. Auto-detects your dev server and opens your application with the visual live editor active — with zero manual setup and zero hardcoded port conflicts.
+
+---
+
+### 🚀 Two Seamless Integration Modes
+
+#### Mode 1: True Single-Port In-App Mode (Vite Plugin — Recommended for Vite Projects)
+Run visual live editing directly on your native dev server port (e.g. `http://localhost:5173`) with **ZERO second proxy port**:
+
+In `vite.config.ts`:
+```typescript
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import { tkCodeStudioPlugin } from './.agent/skills/tk_code_studio/scripts/vite-plugin.js';
+
+export default defineConfig({
+  plugins: [react(), tkCodeStudioPlugin()],
+});
+```
+Now simply run `npm run dev` and open your normal app URL (e.g. `http://localhost:5173`). The `⚡ TK Code Studio` overlay is active natively!
+
+#### Mode 2: Universal Dynamic-Port CLI Runner (Any Framework / Next.js / Static HTML)
+For any framework without configuration, launch via the universal runner:
+```bash
+# Windows
+run_tk_studio.bat
+
+# macOS / Linux
+./run_tk_studio.sh
+
+# Or directly
+node <path-to-skill>/scripts/live.mjs start
+```
+Automatically allocates an available dynamic port without any clashing default ports.
 
 ---
 

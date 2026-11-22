@@ -36,13 +36,15 @@ This automatically:
 Inspect if a dev server is already listening on common ports (3000, 5173, etc.).
 - If not running, start the dev server automatically in the background using `run_command` (e.g. `npm run dev`), or allow TK Code Studio to launch its built-in zero-dependency static server.
 
-### Step 3: Auto-Start TK Code Studio Proxy
-Start the proxy in the background:
-```bash
-node <path-to-skill>/scripts/live.mjs start
-```
-*(or run `run_tk_studio.bat` on Windows / `./run_tk_studio.sh` on macOS/Linux)*.
-The runner automatically opens **`http://localhost:4321`** (or active port) in the user's default browser.
+### Step 3: Launch TK Code Studio (Single-Port or Universal Runner)
+Depending on project setup:
+- **Single-Port Vite Mode (Recommended for Vite apps)**: Add `tkCodeStudioPlugin()` from `./scripts/vite-plugin.js` into `vite.config.ts`. The studio runs directly on the dev server port (`http://localhost:5173`) with **zero second port**.
+- **Universal Dynamic Runner (Any Framework)**:
+  ```bash
+  node <path-to-skill>/scripts/live.mjs start
+  ```
+  *(or run `run_tk_studio.bat` on Windows / `./run_tk_studio.sh` on macOS/Linux)*.
+  Dynamically binds without hardcoded default port collisions and automatically opens the active URL in the user's browser.
 
 ### Step 4: Autonomous Live Queue Listener Loop
 Run the listener in the background:
@@ -75,7 +77,7 @@ After applying changes:
 - **Edit Mode ON / OFF Toggle (`Alt+E`)**: Glowing green switch in the floating dock or keyboard shortcut (`Alt+E`) to toggle between live editing mode and normal interactive browsing without click interference.
 - **Hover**: Highlights element boundaries and displays tag name.
 - **Click**: Selects element, displays live dimensions in dock, and opens floating action toolbar.
-- **Double-Click**: Inline text editing (`Enter` commits visual draft, `Esc` cancels).
+- **Smart Component Text Editing**: Click "Edit text" on any card, header, or flex container to auto-target its child texts (with interactive numbered picker if multiple texts exist) or double-click any leaf element for instant inline editing.
 - **DOM Hierarchy Navigation (`Alt+P` / `Alt+C`)**: Parent ↑ and Child ↓ shortcuts to navigate containers, grids, or nested wrappers.
 - **Duplicate (`Ctrl+D` / `Cmd+D`)**: Clones cards visually in real-time and queues code creation.
 - **Visual Drag Handles (Drag to Resize)**: Drag right, bottom, or corner handles on any box, card, input field, or button with live pixel dimensions tooltip (`240px × 48px`).
