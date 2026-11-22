@@ -138,7 +138,7 @@ exec node "$SCRIPT_PATH" start "$@"
 
   try {
     fs.writeFileSync(shPath, shContent);
-    try { fs.chmodSync(shPath, 0o755); } catch {}
+    try { fs.chmodSync(shPath, 0o755); } catch { }
     console.log(`  ✓ Auto-generated Unix runner: ${path.relative(ROOT, shPath)}`);
   } catch (err) {
     console.warn(`  ! could not create sh file: ${err.message}`);
@@ -154,7 +154,7 @@ function openBrowser(url) {
     } else {
       exec(`xdg-open "${url}"`);
     }
-  } catch {}
+  } catch { }
 }
 
 // ---------- queue ----------
@@ -176,7 +176,7 @@ function* walk(dir) {
     const p = path.join(dir, e.name);
     if (e.isDirectory()) yield* walk(p);
     else if (EXT.has(path.extname(e.name)) && !SKIP_FILES.has(e.name)) {
-      try { if (fs.statSync(p).size < 500_000) yield p; } catch {}
+      try { if (fs.statSync(p).size < 500_000) yield p; } catch { }
     }
   }
 }

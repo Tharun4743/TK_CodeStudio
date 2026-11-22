@@ -769,7 +769,7 @@
 
   function rgbToHex(rgb) {
     if (!rgb || rgb === 'transparent' || rgb === 'rgba(0, 0, 0, 0)') return '#10b981';
-    if (rgb.startsWith('#')) return rgb.length === 4 ? '#' + rgb[1]+rgb[1]+rgb[2]+rgb[2]+rgb[3]+rgb[3] : rgb.slice(0, 7);
+    if (rgb.startsWith('#')) return rgb.length === 4 ? '#' + rgb[1] + rgb[1] + rgb[2] + rgb[2] + rgb[3] + rgb[3] : rgb.slice(0, 7);
     const m = rgb.match(/\d+/g);
     if (!m || m.length < 3) return '#10b981';
     return '#' + ((1 << 24) + (parseInt(m[0]) << 16) + (parseInt(m[1]) << 8) + parseInt(m[2])).toString(16).slice(1);
@@ -1414,7 +1414,7 @@
       const d = await r.json();
       if (d.error) throw new Error(d.error);
       showResult(d);
-      try { sessionStorage.setItem('__liveLast', JSON.stringify({ d, t: Date.now() })); } catch {}
+      try { sessionStorage.setItem('__liveLast', JSON.stringify({ d, t: Date.now() })); } catch { }
       textChanges.clear(); ops.length = 0; undoStack.length = 0; redoStack.length = 0;
       editedEls.forEach(el => { if (el.isConnected) el.__liveOrig = directTexts(el); });
       editedEls.clear();
@@ -1434,9 +1434,9 @@
       h += (d.queued || []).map(q => `<div class="row"><span class="warn">⚠ ${esc(q.type)}${q.reason ? ' — ' + esc(q.reason) : ''}</span></div>`).join('');
     }
     el.innerHTML = h; el.style.display = 'block';
-    el.querySelector('#rx').onclick = () => { el.style.display = 'none'; try { sessionStorage.removeItem('__liveLast'); } catch {} };
+    el.querySelector('#rx').onclick = () => { el.style.display = 'none'; try { sessionStorage.removeItem('__liveLast'); } catch { } };
   }
-  try { const s = JSON.parse(sessionStorage.getItem('__liveLast') || 'null'); if (s && Date.now() - s.t < 120000) showResult(s.d); } catch {}
+  try { const s = JSON.parse(sessionStorage.getItem('__liveLast') || 'null'); if (s && Date.now() - s.t < 120000) showResult(s.d); } catch { }
 
   function setEditMode(state) {
     on = Boolean(state);
