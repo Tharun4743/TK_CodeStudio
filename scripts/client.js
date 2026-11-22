@@ -30,7 +30,8 @@
     .mode-toggle.off:hover{background:#4b5563;color:#f3f4f6}
     .mode-dot{width:8px;height:8px;border-radius:50%;background:#34d399;box-shadow:0 0 8px #34d399;transition:all .15s ease}
     .mode-toggle.off .mode-dot{background:#6b7280;box-shadow:none}
-    #main{left:50%;bottom:18px;transform:translateX(-50%);align-items:center;padding:5px 6px}
+    #main{left:50%;bottom:18px;transform:translateX(-50%);align-items:center;padding:5px 6px;transition:all .2s ease}
+    #main.mode-off .edit-only{display:none}
     .sep{width:1px;background:#374151;margin:2px 2px}
     #count{color:#9ca3af;font-size:12px;padding:0 6px}
     #list{position:fixed;left:50%;bottom:62px;transform:translateX(-50%);width:340px;max-height:260px;overflow:auto;background:#111827;color:#d1d5db;border-radius:8px;padding:8px;font-size:12px;display:none;pointer-events:auto;box-shadow:0 6px 24px rgba(0,0,0,.35)}
@@ -47,10 +48,12 @@
   <div id="result"></div>
   <div id="toast"></div>
   <div id="main" class="bar">
-    <button id="toggle" class="mode-toggle on" title="Toggle Edit Mode (Alt+E)"><span class="mode-dot"></span><span id="toggle-label">Edit: ON</span></button><span class="sep"></span>
-    <button id="undo">Undo</button>
-    <button id="cnt"><span id="count">0 changes</span></button><span class="sep"></span>
-    <button id="save" class="primary">Save to code</button>
+    <button id="toggle" class="mode-toggle on" title="Toggle Edit Mode (Alt+E)"><span class="mode-dot"></span><span id="toggle-label">Edit: ON</span></button>
+    <span class="sep edit-only"></span>
+    <button id="undo" class="edit-only">Undo</button>
+    <button id="cnt" class="edit-only"><span id="count">0 changes</span></button>
+    <span class="sep edit-only"></span>
+    <button id="save" class="primary edit-only">Save to code</button>
   </div>`;
   const $ = s => root.querySelector(s);
   const hoverBox = $('#hover'), selBox = $('#sel'), tagEl = $('#tag'), tools = $('#tools');
@@ -288,8 +291,10 @@
     on = Boolean(state);
     const btn = $('#toggle');
     const lbl = $('#toggle-label');
+    const mainBar = $('#main');
     btn.classList.toggle('on', on);
     btn.classList.toggle('off', !on);
+    if (mainBar) mainBar.classList.toggle('mode-off', !on);
     if (lbl) lbl.textContent = on ? 'Edit: ON' : 'Edit: OFF';
     if (!on) {
       select(null);
