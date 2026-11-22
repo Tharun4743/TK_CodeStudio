@@ -22,12 +22,17 @@
     .handle-se{right:-4px;bottom:-4px;width:9px;height:9px;border-radius:50%;cursor:nwse-resize}
     #tag{position:fixed;display:none;background:#10b981;color:#fff;font-size:11px;padding:2px 6px;border-radius:3px;pointer-events:none;white-space:nowrap}
     #size-pill{position:fixed;display:none;background:#111827;color:#10b981;font-weight:600;font-size:11px;padding:3px 7px;border-radius:4px;border:1px solid #10b981;pointer-events:none;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.5);z-index:99999}
-    .bar{position:fixed;pointer-events:auto;display:flex;gap:4px;padding:4px;background:#111827;border-radius:8px;box-shadow:0 6px 24px rgba(0,0,0,.35)}
+    .bar{position:fixed;pointer-events:auto;display:flex;gap:4px;padding:4px;background:#111827;border-radius:8px;box-shadow:0 6px 24px rgba(0,0,0,.35);align-items:center}
     #tools{display:none}
-    button{all:unset;cursor:pointer;color:#e5e7eb;font-size:12px;padding:5px 9px;border-radius:5px;white-space:nowrap}
+    button{all:unset;cursor:pointer;color:#e5e7eb;font-size:12px;padding:5px 9px;border-radius:5px;white-space:nowrap;transition:background .15s}
     button:hover{background:#374151}
     button.primary{background:#10b981;color:#fff}button.primary:hover{background:#059669}
     button.danger:hover{background:#b91c1c}
+    .brand-badge{display:flex;align-items:center;gap:5px;font-size:12px;font-weight:700;color:#f3f4f6;padding:3px 8px;border-radius:5px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);white-space:nowrap;letter-spacing:.3px}
+    .brand-icon{color:#10b981;font-size:13px}
+    #active-el-pill{color:#a7f3d0;font-size:11px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;padding:3px 8px;border-radius:5px;background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.25);max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    #active-el-pill .dim{color:#94a3b8;font-size:10px;margin-left:4px}
+    .native-picker{position:absolute;opacity:0;pointer-events:none;width:0;height:0}
     .mode-toggle{display:flex;align-items:center;gap:6px;font-weight:600;padding:5px 11px;border-radius:6px;transition:all .15s ease}
     .mode-toggle.on{background:#059669;color:#fff}
     .mode-toggle.on:hover{background:#047857}
@@ -35,7 +40,7 @@
     .mode-toggle.off:hover{background:#4b5563;color:#f3f4f6}
     .mode-dot{width:8px;height:8px;border-radius:50%;background:#34d399;box-shadow:0 0 8px #34d399;transition:all .15s ease}
     .mode-toggle.off .mode-dot{background:#6b7280;box-shadow:none}
-    #main{left:50%;bottom:18px;transform:translateX(-50%);align-items:center;padding:5px 6px;transition:all .2s ease}
+    #main{left:50%;bottom:18px;transform:translateX(-50%);align-items:center;padding:5px 6px;transition:all .2s ease;z-index:999999}
     #main.mode-off .edit-only{display:none}
     .sep{width:1px;background:#374151;margin:2px 2px}
     #count{color:#9ca3af;font-size:12px;padding:0 6px}
@@ -59,16 +64,23 @@
   <div id="list"></div>
   <div id="result"></div>
   <div id="toast"></div>
+  <input type="color" id="native-color" class="native-picker" value="#10b981">
+  <input type="color" id="native-bg" class="native-picker" value="#141417">
   <div id="main" class="bar">
+    <div class="brand-badge"><span class="brand-icon">⚡</span><span>TK Code Studio</span></div>
+    <span class="sep"></span>
     <button id="toggle" class="mode-toggle on" title="Toggle Edit Mode (Alt+E)"><span class="mode-dot"></span><span id="toggle-label">Edit: ON</span></button>
     <span class="sep edit-only"></span>
-    <button id="undo" class="edit-only">Undo</button>
-    <button id="cnt" class="edit-only"><span id="count">0 changes</span></button>
+    <span id="active-el-pill" class="edit-only">Click element to edit</span>
     <span class="sep edit-only"></span>
-    <button id="save" class="primary edit-only">Save to code</button>
+    <button id="undo" class="edit-only" title="Undo Last Change (Ctrl+Z)">Undo</button>
+    <button id="cnt" class="edit-only" title="View Pending Changes"><span id="count">0 changes</span></button>
+    <span class="sep edit-only"></span>
+    <button id="save" class="primary edit-only" title="Save to Code (Ctrl+S)">Save to code</button>
   </div>`;
   const $ = s => root.querySelector(s);
-  const hoverBox = $('#hover'), selBox = $('#sel'), tagEl = $('#tag'), tools = $('#tools');
+  const hoverBox = $('#hover'), selBox = $('#sel'), tagEl = $('#tag'), tools = $('#tools'), activeElPill = $('#active-el-pill');
+  const colorInput = $('#native-color'), bgInput = $('#native-bg');
 
   let on = true, hovered = null, selected = null, editing = null;
   const textChanges = new Map();   // key -> {old,new,selector,html}
@@ -131,27 +143,47 @@
   requestAnimationFrame(frame);
 
   // ---- selection ----
+  function updateElementPill() {
+    if (!activeElPill) return;
+    if (selected && selected.isConnected) {
+      const r = selected.getBoundingClientRect();
+      activeElPill.innerHTML = `&lt;${label(selected)}&gt; <span class="dim">${Math.round(r.width)}×${Math.round(r.height)}</span>`;
+    } else {
+      activeElPill.textContent = 'Click element to edit';
+    }
+  }
+
   function select(el) {
     if (editing) commitEdit();
-    selected = el; buildTools();
+    selected = el;
+    buildTools();
+    updateElementPill();
   }
+
   function buildTools() {
     tools.innerHTML = '';
     if (!selected) return;
-    const add = (name, fn, cls = '') => { const b = document.createElement('button'); b.textContent = name; if (cls) b.className = cls; b.onclick = e => { e.stopPropagation(); fn(); }; tools.appendChild(b); };
-    add('Edit text', startEdit);
-    add('Size 📐', promptSize);
-    add('Font 🔤', promptFontSize);
-    add('Color 🎨', promptColor);
-    add('BG 🖌️', promptBgColor);
-    add('Move ↑', moveUp);
-    add('Move ↓', moveDown);
-    if (isImage(selected)) add('Replace 📷', promptImageUpload);
-    add('Parent ↑', () => selected.parentElement && selected.parentElement !== document.documentElement && select(selected.parentElement));
-    add('Child ↓', () => selected.firstElementChild && select(selected.firstElementChild));
-    add('Duplicate', duplicate);
+    const add = (name, fn, cls = '', tip = '') => {
+      const b = document.createElement('button');
+      b.textContent = name;
+      if (cls) b.className = cls;
+      if (tip) b.title = tip;
+      b.onclick = e => { e.stopPropagation(); fn(); };
+      tools.appendChild(b);
+    };
+    add('Edit text', startEdit, '', 'Inline Text Edit (Double Click)');
+    add('Size 📐', promptSize, '', 'Adjust Size / Presets (Alt+R)');
+    add('Font 🔤', promptFontSize, '', 'Font & Icon Size');
+    add('Color 🎨', triggerColorPicker, '', 'Dynamic Text Color (Alt+K)');
+    add('BG 🖌️', triggerBgPicker, '', 'Dynamic Background Color (Alt+B)');
+    add('Move ↑', moveUp, '', 'Move Element Up (Alt+↑)');
+    add('Move ↓', moveDown, '', 'Move Element Down (Alt+↓)');
+    if (isImage(selected)) add('Replace 📷', promptImageUpload, '', 'Replace Image Asset');
+    add('Parent ↑', () => selected.parentElement && selected.parentElement !== document.documentElement && select(selected.parentElement), '', 'Select Parent (Alt+P)');
+    add('Child ↓', () => selected.firstElementChild && select(selected.firstElementChild), '', 'Select Child (Alt+C)');
+    add('Duplicate', duplicate, '', 'Duplicate Element (Ctrl+D)');
     if (isButton(selected)) add(isDisabled(selected) ? 'Enable' : 'Disable', toggleDisabled);
-    add('Delete', del, 'danger');
+    add('Delete', del, 'danger', 'Delete Element (Del)');
   }
 
   function moveUp() {
@@ -207,51 +239,70 @@
     if (msg) toast(`🎨 ${msg}`);
   }
 
-  function promptColor() {
-    if (!selected) return;
-    const cur = selected.style.color || window.getComputedStyle(selected).color;
-    const choice = prompt(
-      `Set Text Color (Current: ${cur}):\n` +
-      `1 = White (#ffffff)\n` +
-      `2 = Dark Charcoal (#0f172a)\n` +
-      `3 = Emerald Green (#10b981)\n` +
-      `4 = Sky Blue (#0284c7)\n` +
-      `5 = Amber Gold (#f59e0b)\n` +
-      `6 = Rose Red (#ef4444)\n` +
-      `7 = Violet (#8b5cf6)\n` +
-      `Or enter any Hex/RGB (e.g. "#10b981"):`,
-      '#10b981'
-    );
-    if (!choice) return;
-    const map = {
-      '1': '#ffffff', '2': '#0f172a', '3': '#10b981', '4': '#0284c7',
-      '5': '#f59e0b', '6': '#ef4444', '7': '#8b5cf6'
-    };
-    const newColor = map[choice.trim()] || choice.trim();
-    applyStyle('color', newColor, `Text color set to ${newColor}`);
+  function rgbToHex(rgb) {
+    if (!rgb || rgb === 'transparent' || rgb === 'rgba(0, 0, 0, 0)') return '#10b981';
+    if (rgb.startsWith('#')) return rgb.length === 4 ? '#' + rgb[1]+rgb[1]+rgb[2]+rgb[2]+rgb[3]+rgb[3] : rgb.slice(0, 7);
+    const m = rgb.match(/\d+/g);
+    if (!m || m.length < 3) return '#10b981';
+    return '#' + ((1 << 24) + (parseInt(m[0]) << 16) + (parseInt(m[1]) << 8) + parseInt(m[2])).toString(16).slice(1);
   }
 
-  function promptBgColor() {
+  function triggerColorPicker() {
     if (!selected) return;
-    const cur = selected.style.backgroundColor || window.getComputedStyle(selected).backgroundColor;
-    const choice = prompt(
-      `Set Background Color (Current: ${cur}):\n` +
-      `1 = Transparent\n` +
-      `2 = Dark Card (#141417)\n` +
-      `3 = Deep Charcoal (#09090b)\n` +
-      `4 = Emerald (#10b981)\n` +
-      `5 = Slate Card (#1e293b)\n` +
-      `6 = Clean White (#ffffff)\n` +
-      `Or enter any Hex/RGB (e.g. "#18181b"):`,
-      '#141417'
-    );
-    if (!choice) return;
-    const map = {
-      '1': 'transparent', '2': '#141417', '3': '#09090b', '4': '#10b981',
-      '5': '#1e293b', '6': '#ffffff'
+    const cur = window.getComputedStyle(selected).color;
+    colorInput.value = rgbToHex(cur);
+    const prevColor = selected.style.color;
+    const prevStyle = selected.getAttribute('style') || '';
+
+    colorInput.oninput = ev => {
+      selected.style.color = ev.target.value;
     };
-    const newBg = map[choice.trim()] || choice.trim();
-    applyStyle('backgroundColor', newBg, `Background set to ${newBg}`);
+
+    colorInput.onchange = ev => {
+      const val = ev.target.value;
+      selected.style.color = val;
+      const op = { type: 'style', property: 'color', value: val, style: selected.getAttribute('style'), ...meta(selected) };
+      ops.push(op);
+      undoStack.push(() => {
+        if (prevStyle) selected.setAttribute('style', prevStyle);
+        else selected.style.color = prevColor;
+        ops.splice(ops.indexOf(op), 1);
+        refresh();
+      });
+      refresh();
+      toast(`🎨 Text color set to ${val}`);
+    };
+
+    colorInput.click();
+  }
+
+  function triggerBgPicker() {
+    if (!selected) return;
+    const cur = window.getComputedStyle(selected).backgroundColor;
+    bgInput.value = rgbToHex(cur);
+    const prevBg = selected.style.backgroundColor;
+    const prevStyle = selected.getAttribute('style') || '';
+
+    bgInput.oninput = ev => {
+      selected.style.backgroundColor = ev.target.value;
+    };
+
+    bgInput.onchange = ev => {
+      const val = ev.target.value;
+      selected.style.backgroundColor = val;
+      const op = { type: 'style', property: 'backgroundColor', value: val, style: selected.getAttribute('style'), ...meta(selected) };
+      ops.push(op);
+      undoStack.push(() => {
+        if (prevStyle) selected.setAttribute('style', prevStyle);
+        else selected.style.backgroundColor = prevBg;
+        ops.splice(ops.indexOf(op), 1);
+        refresh();
+      });
+      refresh();
+      toast(`🖌️ Background set to ${val}`);
+    };
+
+    bgInput.click();
   }
 
   function promptFontSize() {
@@ -753,13 +804,63 @@
   $('#cnt').onclick = () => { const l = $('#list'); l.style.display = l.style.display === 'block' ? 'none' : 'block'; };
   $('#toggle').onclick = () => setEditMode(!on);
   document.addEventListener('keydown', e => {
+    // Mode toggle
     if ((e.altKey && (e.key === 'e' || e.key === 'E')) || (e.ctrlKey && e.shiftKey && (e.key === 'e' || e.key === 'E'))) {
       e.preventDefault();
       setEditMode(!on);
       return;
     }
-    if ((e.metaKey || e.ctrlKey) && e.key === 's') { e.preventDefault(); save(); }
-    if ((e.metaKey || e.ctrlKey) && e.key === 'z' && !editing) { e.preventDefault(); $('#undo').click(); }
+    if (!on) return;
+
+    // Save
+    if ((e.metaKey || e.ctrlKey) && (e.key === 's' || e.key === 'S')) {
+      e.preventDefault(); save(); return;
+    }
+    // Undo
+    if ((e.metaKey || e.ctrlKey) && (e.key === 'z' || e.key === 'Z') && !editing) {
+      e.preventDefault(); $('#undo').click(); return;
+    }
+    // Duplicate
+    if ((e.metaKey || e.ctrlKey) && (e.key === 'd' || e.key === 'D') && selected && !editing) {
+      e.preventDefault(); duplicate(); return;
+    }
+    // Delete
+    if ((e.key === 'Delete' || e.key === 'Backspace') && selected && !editing) {
+      e.preventDefault(); del(); return;
+    }
+    // Move up
+    if (e.altKey && e.key === 'ArrowUp' && selected && !editing) {
+      e.preventDefault(); moveUp(); return;
+    }
+    // Move down
+    if (e.altKey && e.key === 'ArrowDown' && selected && !editing) {
+      e.preventDefault(); moveDown(); return;
+    }
+    // Parent
+    if (e.altKey && (e.key === 'p' || e.key === 'P') && selected && !editing) {
+      e.preventDefault();
+      if (selected.parentElement && selected.parentElement !== document.documentElement) select(selected.parentElement);
+      return;
+    }
+    // Child
+    if (e.altKey && (e.key === 'c' || e.key === 'C') && selected && !editing) {
+      e.preventDefault();
+      if (selected.firstElementChild) select(selected.firstElementChild);
+      return;
+    }
+    // Text color
+    if (e.altKey && (e.key === 'k' || e.key === 'K') && selected && !editing) {
+      e.preventDefault(); triggerColorPicker(); return;
+    }
+    // Background color
+    if (e.altKey && (e.key === 'b' || e.key === 'B') && selected && !editing) {
+      e.preventDefault(); triggerBgPicker(); return;
+    }
+    // Size tool
+    if (e.altKey && (e.key === 'r' || e.key === 'R') && selected && !editing) {
+      e.preventDefault(); promptSize(); return;
+    }
+    // Deselect
     if (e.key === 'Escape' && !editing) select(null);
   }, true);
   initResizeHandles();

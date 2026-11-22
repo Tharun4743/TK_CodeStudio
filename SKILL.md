@@ -71,21 +71,24 @@ After applying changes:
 
 ## 🖱️ In-Browser Visual Overlay Features
 
+- **⚡ TK Code Studio Branding & Active Element Pill**: Sleek brand badge in the dock with a live `<tag.class> W×H` dimensions pill displaying the active element's tag, primary class, and bounding width/height in real time.
 - **Edit Mode ON / OFF Toggle (`Alt+E`)**: Glowing green switch in the floating dock or keyboard shortcut (`Alt+E`) to toggle between live editing mode and normal interactive browsing without click interference.
 - **Hover**: Highlights element boundaries and displays tag name.
-- **Click**: Selects element and opens floating action toolbar.
+- **Click**: Selects element, displays live dimensions in dock, and opens floating action toolbar.
 - **Double-Click**: Inline text editing (`Enter` commits visual draft, `Esc` cancels).
-- **Parent ↑ / Child ↓**: Effortless DOM tree navigation to select parent cards or child elements.
-- **Duplicate**: Clones cards visually in real-time and queues code creation.
+- **DOM Hierarchy Navigation (`Alt+P` / `Alt+C`)**: Parent ↑ and Child ↓ shortcuts to navigate containers, grids, or nested wrappers.
+- **Duplicate (`Ctrl+D` / `Cmd+D`)**: Clones cards visually in real-time and queues code creation.
 - **Visual Drag Handles (Drag to Resize)**: Drag right, bottom, or corner handles on any box, card, input field, or button with live pixel dimensions tooltip (`240px × 48px`).
-- **Size Dialog & Presets (`Size 📐`)**: Quick dimension controls for boxes (`100%`, `50%`, `380px`, `auto`), input fields, and buttons (`Sm`, `Md`, `Lg`, `Full Width`, or custom).
-- **Move Elements (`Move ↑`, `Move ↓`)**: Reorder buttons, cards, boxes, and form fields up or down within their parent container in real-time.
-- **Color & Palette (`Color 🎨`, `BG 🖌️`)**: Instant swatches (Emerald, White, Slate, Amber, Rose, Violet) and custom hex for text and background colors.
+- **Size Dialog & Presets (`Size 📐` / `Alt+R`)**: Quick dimension controls for boxes (`100%`, `50%`, `380px`, `auto`), input fields, and buttons (`Sm`, `Md`, `Lg`, `Full Width`, or custom).
+- **Move Elements (`Alt+↑` / `Alt+↓`)**: Reorder buttons, cards, boxes, and form fields up or down within their parent container in real-time.
+- **Dynamic Color Wheel (`Color 🎨` / `Alt+K`, `BG 🖌️` / `Alt+B`)**: Native HTML5 color spectrum picker with eyedropper support and instant real-time live preview for text and background colors.
 - **Font & Icon Sizing (`Font 🔤`)**: Interactive `A-` / `A+` buttons and preset typography scales for text and icons.
 - **Drag & Drop Image Asset Swapping (`Replace 📷`)**: Drag any image file from desktop onto an image to auto-upload to project assets and swap `src` in real-time.
-- **Delete**: Removes element visually and queues code removal.
+- **Delete (`Delete` / `Backspace`)**: Removes element visually and queues code removal.
 - **Enable / Disable**: Toggles button disabled states.
+- **Undo (`Ctrl+Z` / `Cmd+Z`)**: Instantly rolls back the last in-memory visual edit.
 - **Save to code (`Ctrl+S` / `Cmd+S`)**: Commits changes: writes text to files and flushes structural queue.
+- **Deselect (`Escape`)**: Clears active selection and closes toolbars.
 
 ---
 

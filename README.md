@@ -124,21 +124,22 @@ The visual editing overlay lives in an isolated Shadow DOM (`#__live-host`) with
 | :--- | :--- | :--- |
 | **Edit Mode ON / OFF** | <kbd>Alt</kbd> + <kbd>E</kbd> | Toggles between live visual editing and native interactive browsing. When OFF, the toolbar collapses to a minimal pill and clicks pass through natively. |
 | **Hover** | Mouse move | Highlights element bounding box and displays HTML tag name. |
-| **Select** | Click element | Activates element and opens the floating context toolbar. |
+| **Select** | Click element | Activates element, displays live dimensions in dock, and opens context toolbar. |
 | **Inline Edit** | Double-Click | Turns text directly into an editable field. Press <kbd>Enter</kbd> to commit visual draft, <kbd>Esc</kbd> to cancel. |
-| **Parent ↑** | <kbd>Parent</kbd> button | Climbs DOM tree to select parent cards, containers, or grid wrappers. |
-| **Child ↓** | <kbd>Child</kbd> button | Descends DOM tree into child elements. |
-| **Duplicate** | <kbd>Duplicate</kbd> | Visually clones element in real-time and queues code creation in `.live/pending.json`. |
-| **Drag Resize** | Drag Handles on Box | Drag right, bottom, or corner handles on any box, card, input field, or button with live pixel tooltip. |
-| **Size & Presets** | <kbd>Size 📐</kbd> button | Set instant presets for buttons/inputs (`Sm`, `Md`, `Lg`, `100%`) or box containers (`100%`, `50%`, `380px`, `auto`). |
-| **Move Elements** | <kbd>Move ↑</kbd> / <kbd>Move ↓</kbd> | Reorder buttons, inputs, cards, or boxes before or after siblings in real-time. |
-| **Color & BG** | <kbd>Color 🎨</kbd> / <kbd>BG 🖌️</kbd> | Interactive color swatches + custom hex inputs for text and background styling. |
+| **Dynamic Text Color** | <kbd>Color 🎨</kbd> / <kbd>Alt</kbd> + <kbd>K</kbd> | Opens interactive dynamic HTML5 color wheel with real-time DOM spectrum preview. |
+| **Dynamic Background** | <kbd>BG 🖌️</kbd> / <kbd>Alt</kbd> + <kbd>B</kbd> | Opens interactive dynamic background color spectrum picker. |
 | **Font & Icon Size** | <kbd>Font 🔤</kbd> button | <kbd>A-</kbd> / <kbd>A+</kbd> fine adjustments or preset typography scales (12px to 40px) for text and icons. |
+| **Drag Resize** | Drag Handles on Box | Drag right, bottom, or corner handles on any box, card, input field, or button with live pixel tooltip. |
+| **Size & Presets** | <kbd>Size 📐</kbd> / <kbd>Alt</kbd> + <kbd>R</kbd> | Set instant presets for buttons/inputs (`Sm`, `Md`, `Lg`, `100%`) or box containers (`100%`, `50%`, `380px`, `auto`). |
+| **Move Elements** | <kbd>Alt</kbd> + <kbd>↑</kbd> / <kbd>Alt</kbd> + <kbd>↓</kbd> | Reorder buttons, inputs, cards, or boxes before or after siblings in real-time. |
+| **Traverse DOM** | <kbd>Alt</kbd> + <kbd>P</kbd> / <kbd>Alt</kbd> + <kbd>C</kbd> | Effortless DOM hierarchy navigation (<kbd>Alt+P</kbd> for Parent, <kbd>Alt+C</kbd> for Child). |
+| **Duplicate** | <kbd>Ctrl</kbd> + <kbd>D</kbd> / <kbd>Cmd</kbd> + <kbd>D</kbd> | Visually clones element in real-time and queues code creation in `.live/pending.json`. |
+| **Delete** | <kbd>Delete</kbd> / <kbd>Backspace</kbd> | Visually hides element and queues clean code removal. |
 | **Asset Swapping** | Drag & Drop / <kbd>Replace 📷</kbd> | Drag any image file from desktop onto an image to auto-upload to project assets and swap `src`. |
-| **Delete** | <kbd>Delete</kbd> | Visually hides element and queues clean code removal. |
 | **Toggle State** | <kbd>Disable / Enable</kbd> | Toggles button/input `disabled` attribute visually and in queue. |
-| **Undo** | <kbd>Undo</kbd> | Rolls back the last in-memory visual edit. |
+| **Undo** | <kbd>Ctrl</kbd> + <kbd>Z</kbd> / <kbd>Cmd</kbd> + <kbd>Z</kbd> | Rolls back the last in-memory visual edit. |
 | **Save to Code** | <kbd>Ctrl</kbd> + <kbd>S</kbd> / <kbd>Cmd</kbd> + <kbd>S</kbd> | Flushes changes: writes plain text straight to files and triggers queue listener. |
+| **Deselect** | <kbd>Escape</kbd> | Clears active selection and closes toolbars. |
 
 ---
 
