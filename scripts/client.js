@@ -14,14 +14,19 @@
   <style>
     *{box-sizing:border-box;font-family:ui-sans-serif,system-ui,-apple-system,sans-serif}
     .box{position:fixed;pointer-events:none;border-radius:3px;display:none}
-    #hover{outline:1.5px dashed #6366f1;background:rgba(99,102,241,.06)}
-    #sel{outline:2px solid #6366f1;background:rgba(99,102,241,.08)}
-    #tag{position:fixed;display:none;background:#6366f1;color:#fff;font-size:11px;padding:2px 6px;border-radius:3px;pointer-events:none;white-space:nowrap}
+    #hover{outline:1.5px dashed #10b981;background:rgba(16,185,129,.06)}
+    #sel{outline:2px solid #10b981;background:rgba(16,185,129,.08);pointer-events:none}
+    .handle{position:absolute;background:#10b981;border:1.5px solid #fff;border-radius:2px;pointer-events:auto;z-index:9999}
+    .handle-r{right:-4px;top:50%;transform:translateY(-50%);width:7px;height:18px;cursor:ew-resize}
+    .handle-b{bottom:-4px;left:50%;transform:translateX(-50%);width:18px;height:7px;cursor:ns-resize}
+    .handle-se{right:-4px;bottom:-4px;width:9px;height:9px;border-radius:50%;cursor:nwse-resize}
+    #tag{position:fixed;display:none;background:#10b981;color:#fff;font-size:11px;padding:2px 6px;border-radius:3px;pointer-events:none;white-space:nowrap}
+    #size-pill{position:fixed;display:none;background:#111827;color:#10b981;font-weight:600;font-size:11px;padding:3px 7px;border-radius:4px;border:1px solid #10b981;pointer-events:none;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.5);z-index:99999}
     .bar{position:fixed;pointer-events:auto;display:flex;gap:4px;padding:4px;background:#111827;border-radius:8px;box-shadow:0 6px 24px rgba(0,0,0,.35)}
     #tools{display:none}
     button{all:unset;cursor:pointer;color:#e5e7eb;font-size:12px;padding:5px 9px;border-radius:5px;white-space:nowrap}
     button:hover{background:#374151}
-    button.primary{background:#6366f1;color:#fff}button.primary:hover{background:#4f46e5}
+    button.primary{background:#10b981;color:#fff}button.primary:hover{background:#059669}
     button.danger:hover{background:#b91c1c}
     .mode-toggle{display:flex;align-items:center;gap:6px;font-weight:600;padding:5px 11px;border-radius:6px;transition:all .15s ease}
     .mode-toggle.on{background:#059669;color:#fff}
@@ -42,7 +47,14 @@
     #result div.row{padding:4px 0;border-top:1px solid #1f2937}
     #toast{position:fixed;left:50%;bottom:72px;transform:translateX(-50%);background:#111827;color:#fff;font-size:12px;padding:8px 12px;border-radius:8px;display:none;max-width:420px}
   </style>
-  <div id="hover" class="box"></div><div id="sel" class="box"></div><div id="tag"></div>
+  <div id="hover" class="box"></div>
+  <div id="sel" class="box">
+    <div class="handle handle-r" title="Drag to adjust width"></div>
+    <div class="handle handle-b" title="Drag to adjust height"></div>
+    <div class="handle handle-se" title="Drag to adjust width & height"></div>
+  </div>
+  <div id="tag"></div>
+  <div id="size-pill"></div>
   <div id="tools" class="bar"></div>
   <div id="list"></div>
   <div id="result"></div>
@@ -84,6 +96,9 @@
   const txt = el => (el.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 120);
   const label = el => el.tagName.toLowerCase() + ([...el.classList][0] ? '.' + [...el.classList][0] : '');
   const isButton = el => el.matches('button,[role=button],input[type=submit],input[type=button],a.btn,a[class*=button],a[class*=btn]');
+  const isInput = el => el.matches('input,textarea,select');
+  const sizePill = $('#size-pill');
+  let resizing = false;
   const directTexts = el => [...el.childNodes].filter(n => n.nodeType === 3 && n.nodeValue.trim()).map(n => n.nodeValue.trim().replace(/\s+/g, ' '));
 
   function toast(msg, ms = 3500) {
@@ -123,11 +138,188 @@
     if (!selected) return;
     const add = (name, fn, cls = '') => { const b = document.createElement('button'); b.textContent = name; if (cls) b.className = cls; b.onclick = e => { e.stopPropagation(); fn(); }; tools.appendChild(b); };
     add('Edit text', startEdit);
+    add('Size 📐', promptSize);
     add('Parent ↑', () => selected.parentElement && selected.parentElement !== document.documentElement && select(selected.parentElement));
     add('Child ↓', () => selected.firstElementChild && select(selected.firstElementChild));
     add('Duplicate', duplicate);
     if (isButton(selected)) add(isDisabled(selected) ? 'Enable' : 'Disable', toggleDisabled);
     add('Delete', del, 'danger');
+  }
+
+  function promptSize() {
+    if (!selected) return;
+    const tag = selected.tagName.toLowerCase();
+    const rect = selected.getBoundingClientRect();
+    const curW = Math.round(rect.width);
+    const curH = Math.round(rect.height);
+
+    if (isButton(selected) || isInput(selected)) {
+      const choice = prompt(
+        `Adjust Size for <${tag}> (${curW}px × ${curH}px):\n` +
+        `1 = Small (padding: 4px 10px / height: 32px)\n` +
+        `2 = Medium (padding: 8px 16px / height: 42px)\n` +
+        `3 = Large (padding: 12px 24px / height: 50px)\n` +
+        `4 = Full Width (width: 100%)\n` +
+        `5 = Auto (natural size)\n` +
+        `Or enter custom "width height" (e.g. "280px 44px"):`,
+        `${curW}px ${curH}px`
+      );
+      if (!choice) return;
+
+      let newW = '', newH = '', newPad = '';
+      const c = choice.trim().toLowerCase();
+      if (c === '1' || c === 'sm') { newPad = '4px 10px'; newH = '32px'; }
+      else if (c === '2' || c === 'md') { newPad = '8px 16px'; newH = '42px'; }
+      else if (c === '3' || c === 'lg') { newPad = '12px 24px'; newH = '50px'; }
+      else if (c === '4' || c === 'full') { newW = '100%'; }
+      else if (c === '5' || c === 'auto') { newW = 'auto'; newH = 'auto'; newPad = ''; }
+      else {
+        const parts = choice.trim().split(/\s+/);
+        newW = parts[0] || 'auto';
+        newH = parts[1] || 'auto';
+      }
+      applyElementSize(newW, newH, newPad);
+    } else {
+      const choice = prompt(
+        `Adjust Box Size for <${tag}> (${curW}px × ${curH}px):\n` +
+        `1 = Full Width (100%)\n` +
+        `2 = Half Width (50%)\n` +
+        `3 = Card Box (380px)\n` +
+        `4 = Auto (fit content)\n` +
+        `Or enter custom "width height" (e.g. "500px 320px"):`,
+        `${curW}px ${curH}px`
+      );
+      if (!choice) return;
+
+      let newW = '', newH = '';
+      const c = choice.trim().toLowerCase();
+      if (c === '1' || c === 'full') newW = '100%';
+      else if (c === '2') newW = '50%';
+      else if (c === '3') newW = '380px';
+      else if (c === '4' || c === 'auto') { newW = 'auto'; newH = 'auto'; }
+      else {
+        const parts = choice.trim().split(/\s+/);
+        newW = parts[0] || 'auto';
+        newH = parts[1] || 'auto';
+      }
+      applyElementSize(newW, newH, '');
+    }
+  }
+
+  function applyElementSize(w, h, padding) {
+    const el = selected; if (!el) return;
+    const prevStyle = el.getAttribute('style') || '';
+    const prevW = el.style.width;
+    const prevH = el.style.height;
+    const prevPad = el.style.padding;
+
+    if (w) el.style.width = w;
+    if (h) el.style.height = h;
+    if (padding) el.style.padding = padding;
+
+    const op = {
+      type: 'resize',
+      width: el.style.width || w,
+      height: el.style.height || h,
+      padding: el.style.padding || padding,
+      style: el.getAttribute('style'),
+      ...meta(el)
+    };
+    ops.push(op);
+
+    undoStack.push(() => {
+      if (prevStyle) el.setAttribute('style', prevStyle);
+      else { el.style.width = prevW; el.style.height = prevH; el.style.padding = prevPad; }
+      ops.splice(ops.indexOf(op), 1);
+      refresh();
+    });
+
+    refresh();
+    toast(`📐 Updated size on <${el.tagName.toLowerCase()}> to ${el.style.width || w} × ${el.style.height || h}`);
+  }
+
+  function initResizeHandles() {
+    const handles = selBox.querySelectorAll('.handle');
+    handles.forEach(h => {
+      h.addEventListener('mousedown', e => {
+        if (!selected) return;
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+
+        resizing = true;
+        const startX = e.clientX;
+        const startY = e.clientY;
+        const rect = selected.getBoundingClientRect();
+        const startW = rect.width;
+        const startH = rect.height;
+        const prevStyle = selected.getAttribute('style') || '';
+        const prevW = selected.style.width;
+        const prevH = selected.style.height;
+
+        const isR = h.classList.contains('handle-r');
+        const isB = h.classList.contains('handle-b');
+        const isSE = h.classList.contains('handle-se');
+
+        let currentW = Math.round(startW);
+        let currentH = Math.round(startH);
+
+        const onMouseMove = ev => {
+          if (!resizing) return;
+          const dx = ev.clientX - startX;
+          const dy = ev.clientY - startY;
+
+          if (isR || isSE) {
+            currentW = Math.max(16, Math.round(startW + dx));
+            selected.style.width = currentW + 'px';
+          }
+          if (isB || isSE) {
+            currentH = Math.max(16, Math.round(startH + dy));
+            selected.style.height = currentH + 'px';
+          }
+
+          const currentRect = selected.getBoundingClientRect();
+          sizePill.textContent = `${currentW}px × ${currentH}px`;
+          sizePill.style.display = 'block';
+          sizePill.style.left = (currentRect.right - 40) + 'px';
+          sizePill.style.top = (currentRect.bottom + 8) + 'px';
+        };
+
+        const onMouseUp = () => {
+          if (!resizing) return;
+          resizing = false;
+          window.removeEventListener('mousemove', onMouseMove, true);
+          window.removeEventListener('mouseup', onMouseUp, true);
+          sizePill.style.display = 'none';
+
+          if (currentW === Math.round(startW) && currentH === Math.round(startH)) return;
+
+          const wStr = selected.style.width;
+          const hStr = selected.style.height;
+          const op = {
+            type: 'resize',
+            width: wStr,
+            height: hStr,
+            style: selected.getAttribute('style'),
+            ...meta(selected)
+          };
+          ops.push(op);
+
+          undoStack.push(() => {
+            if (prevStyle) selected.setAttribute('style', prevStyle);
+            else { selected.style.width = prevW; selected.style.height = prevH; }
+            ops.splice(ops.indexOf(op), 1);
+            refresh();
+          });
+
+          refresh();
+          toast(`📐 Resized <${selected.tagName.toLowerCase()}> to ${wStr} × ${hStr}`);
+        };
+
+        window.addEventListener('mousemove', onMouseMove, true);
+        window.addEventListener('mouseup', onMouseUp, true);
+      }, true);
+    });
   }
 
   document.addEventListener('mousemove', e => { if (on && !inUI(e.target)) hovered = e.target; }, true);
@@ -323,5 +515,6 @@
     if ((e.metaKey || e.ctrlKey) && e.key === 'z' && !editing) { e.preventDefault(); $('#undo').click(); }
     if (e.key === 'Escape' && !editing) select(null);
   }, true);
+  initResizeHandles();
   refresh();
 })();

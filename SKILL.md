@@ -56,6 +56,7 @@ When the user clicks **Save to code** in the browser, process queued items immed
 | `text` (ambiguous / notfound) | Inspect listed candidate files. Match context and update the correct file/CMS/i18n entry. |
 | `duplicate` | If component is mapped from an array/JSON, append a clean new entry. If static JSX/HTML, duplicate markup preserving unique keys/ids. |
 | `delete` | Remove the corresponding array item or markup, and clean up unused imports. |
+| `resize` | Apply updated width, height, or padding to the box, input, or button (via inline style or Tailwind utility classes). |
 | `attr` `disabled` | Toggle `disabled` attribute or the corresponding component prop/state. |
 
 After applying changes:
@@ -73,6 +74,8 @@ After applying changes:
 - **Double-Click**: Inline text editing (`Enter` commits visual draft, `Esc` cancels).
 - **Parent ↑ / Child ↓**: Effortless DOM tree navigation to select parent cards or child elements.
 - **Duplicate**: Clones cards visually in real-time and queues code creation.
+- **Visual Drag Handles (Drag to Resize)**: Drag right, bottom, or corner handles on any box, card, input field, or button with live pixel dimensions tooltip (`240px × 48px`).
+- **Size Dialog & Presets (`Size 📐`)**: Quick dimension controls for boxes (`100%`, `50%`, `380px`, `auto`), input fields, and buttons (`Sm`, `Md`, `Lg`, `Full Width`, or custom).
 - **Delete**: Removes element visually and queues code removal.
 - **Enable / Disable**: Toggles button disabled states.
 - **Save to code (`Ctrl+S` / `Cmd+S`)**: Commits changes: writes text to files and flushes structural queue.

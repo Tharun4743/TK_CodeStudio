@@ -416,8 +416,9 @@ function save(body) {
   }
   for (const o of body.ops || []) {
     q.items.push({ id: stamp(), page: body.page, ...o });
-    queued.push({ type: o.type, tag: o.tag, text: o.text });
-    console.log(`  ⚠ queued ${o.type} <${o.tag}> "${(o.text || '').slice(0, 40)}"`);
+    const preview = o.type === 'resize' ? `${o.width || ''} × ${o.height || ''}` : (o.text || '');
+    queued.push({ type: o.type, tag: o.tag, text: preview });
+    console.log(`  ⚠ queued ${o.type} <${o.tag}> "${preview.slice(0, 40)}"`);
   }
   if (queued.length) { q.ready = true; writeQueue(q); }
   return { applied, queued, failed, root: ROOT, scanned };
@@ -563,6 +564,9 @@ function fmt(it) {
   if (it.type === 'text') {
     lines.push(`  change text: ${JSON.stringify(it.old)} -> ${JSON.stringify(it.new)}`);
     if (it.candidates?.length) lines.push(`  candidates: ${it.candidates.join(', ')}`);
+  } else if (it.type === 'resize') {
+    lines.push(`  resize to: width=${it.width || 'auto'}, height=${it.height || 'auto'}${it.padding ? ', padding=' + it.padding : ''} on <${it.tag}> "${(it.text || '').slice(0, 60)}"`);
+    if (it.style) lines.push(`  inline style: ${it.style}`);
   } else if (it.type === 'attr') {
     lines.push(`  set ${it.name}=${it.value} on <${it.tag}> "${(it.text || '').slice(0, 60)}"`);
   } else {
