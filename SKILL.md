@@ -42,7 +42,7 @@ Start the proxy in the background:
 node <path-to-skill>/scripts/live.mjs start
 ```
 *(or run `run_tk_studio.bat` on Windows / `./run_tk_studio.sh` on macOS/Linux)*.
-The runner automatically opens **`http://localhost:4743`** in the user's default browser.
+The runner automatically opens **`http://localhost:4321`** (or active port) in the user's default browser.
 
 ### Step 4: Autonomous Live Queue Listener Loop
 Run the listener in the background:

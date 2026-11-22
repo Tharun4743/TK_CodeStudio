@@ -11,7 +11,9 @@
 ## 🎬 Live Demo
 
 <p align="center">
-  <video src="assets/demo.mp4" width="100%" controls autoplay loop muted></video>
+  <video src="assets/demo.mp4" width="100%" controls autoplay loop muted playsinline>
+    <iframe src="assets/demo.mp4" width="100%" height="450" frameborder="0" allowfullscreen></iframe>
+  </video>
 </p>
 
 > 💡 **Watch TK Code Studio in Action:** Edit text directly on the page, reorder cards visually, and press <kbd>Ctrl + S</kbd> to persist changes instantly to your source code.
@@ -30,7 +32,7 @@
 
 ```
 ┌────────────────────────┐         ┌────────────────────────┐         ┌────────────────────────┐
-│                        │  4743   │     TK Code Studio     │         │   Your Dev Server      │
+│                        │  4321   │     TK Code Studio     │         │   Your Dev Server      │
 │     Browser Window     │◄───────►│     Reverse Proxy      │◄───────►│  (Vite, Next, Astro,   │
 │ (Shadow DOM Injected)  │         │  (Node.js / Zero-dep)  │         │   Nuxt, or Built-in)   │
 └───────────┬────────────┘         └───────────┬────────────┘         └────────────────────────┘
@@ -57,13 +59,13 @@
 You can configure **TK Code Studio** globally in seconds. Just copy and paste this prompt into your AI coding agent (Antigravity, Claude Code, Cursor, Windsurf):
 
 ```text
-Import and configure the TK Code Studio skill from https://github.com/Tharun4743/TK_CodeStudio.git into my global skills directory (~/.gemini/config/skills/tk_code_studio). Once configured, whenever I ask you to visually edit or launch any opened project, automatically generate run_tk_studio.bat in that project root, auto-start the dev server, launch the proxy on port 4743, and open my browser for visual live editing.
+Import and configure the TK Code Studio skill from https://github.com/Tharun4743/TK_CodeStudio.git into my global skills directory (~/.gemini/config/skills/tk_code_studio). Once configured, whenever I ask you to visually edit or launch any opened project, automatically generate the runner in that project root, auto-start the dev server, launch the proxy, and open my browser for visual live editing.
 ```
 
 #### What happens automatically:
 1. Your AI agent clones/updates `TK_CodeStudio` into your global skills directory.
-2. In **any opened project or folder**, your agent automatically generates **`run_tk_studio.bat`**.
-3. Auto-detects your dev server (or starts the built-in static server) and opens **`http://localhost:4743`** with zero manual setup.
+2. In **any opened project or folder**, your agent automatically generates **`run_tk_studio.bat`** (Windows) and **`run_tk_studio.sh`** (Unix).
+3. Auto-detects your dev server (or starts the built-in static server) and opens **`http://localhost:4321`** with zero manual setup.
 
 ---
 
@@ -177,8 +179,8 @@ node scripts/live.mjs <command> [options]
 
 | Command | Arguments / Flags | Description |
 | :--- | :--- | :--- |
-| **`start`** | `--port <num>` (default: `4743`)<br>`--target <url>` | Starts the proxy and opens the browser. Auto-detects dev server or starts static server. |
-| **`init`** | — | Scaffolds `.agent/skills/tk_code_studio`, configures `package.json`, and creates `run_tk_studio.bat`. |
+| **`start`** | `--port <num>` (default: `4321`)<br>`--target <url>` | Starts the proxy and opens the browser. Auto-detects dev server or starts static server. |
+| **`init`** | — | Scaffolds `.agent/skills/tk_code_studio`, configures `package.json`, and creates `run_tk_studio.bat` and `run_tk_studio.sh`. |
 | **`wait`** | `--timeout <sec>` (default: `600`) | Blocks execution until structural edits are saved from the browser, then prints them. |
 | **`pending`** | — | Prints all staged structural changes in human-readable format without blocking. |
 | **`done`** | `[id ...]` | Clears resolved items by ID, or flushes entire queue if no ID is passed. |
@@ -216,6 +218,23 @@ node scripts/live.mjs done 7c29e1
 - **Localhost Binding:** Reverse proxy binds strictly to `127.0.0.1`. No external network exposure.
 - **Cryptographic Token Verification:** All save payloads must present a valid per-session `x-live-token` generated on startup.
 - **Zero Cloud Leakage:** All edits are executed entirely on your local filesystem. No telemetry, third-party trackers, or cloud dependencies.
+
+---
+
+## 👨‍💻 Author & Maintainer
+
+<div align="center">
+  <a href="https://github.com/Tharun4743">
+    <img src="https://github.com/Tharun4743.png" width="105" height="105" style="border-radius: 50%; border: 2px solid #10b981;" alt="Tharun Kumar">
+  </a>
+  <h3>Tharun Kumar</h3>
+  <p><strong>Full-Stack & AI Systems Architect</strong> • Creator of <em>TK Code Studio</em></p>
+  <p>Building next-generation developer tooling, agentic skills, and real-time visual development workflows.</p>
+  <p>
+    <a href="https://github.com/Tharun4743"><strong>GitHub Profile (@Tharun4743)</strong></a> &nbsp;•&nbsp; 
+    <a href="https://github.com/Tharun4743/TK_CodeStudio"><strong>TK Code Studio Repository</strong></a>
+  </p>
+</div>
 
 ---
 
