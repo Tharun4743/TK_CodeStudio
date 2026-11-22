@@ -131,6 +131,10 @@ The visual editing overlay lives in an isolated Shadow DOM (`#__live-host`) with
 | **Duplicate** | <kbd>Duplicate</kbd> | Visually clones element in real-time and queues code creation in `.live/pending.json`. |
 | **Drag Resize** | Drag Handles on Box | Drag right, bottom, or corner handles on any box, card, input field, or button with live pixel tooltip. |
 | **Size & Presets** | <kbd>Size 📐</kbd> button | Set instant presets for buttons/inputs (`Sm`, `Md`, `Lg`, `100%`) or box containers (`100%`, `50%`, `380px`, `auto`). |
+| **Move Elements** | <kbd>Move ↑</kbd> / <kbd>Move ↓</kbd> | Reorder buttons, inputs, cards, or boxes before or after siblings in real-time. |
+| **Color & BG** | <kbd>Color 🎨</kbd> / <kbd>BG 🖌️</kbd> | Interactive color swatches + custom hex inputs for text and background styling. |
+| **Font & Icon Size** | <kbd>Font 🔤</kbd> button | <kbd>A-</kbd> / <kbd>A+</kbd> fine adjustments or preset typography scales (12px to 40px) for text and icons. |
+| **Asset Swapping** | Drag & Drop / <kbd>Replace 📷</kbd> | Drag any image file from desktop onto an image to auto-upload to project assets and swap `src`. |
 | **Delete** | <kbd>Delete</kbd> | Visually hides element and queues clean code removal. |
 | **Toggle State** | <kbd>Disable / Enable</kbd> | Toggles button/input `disabled` attribute visually and in queue. |
 | **Undo** | <kbd>Undo</kbd> | Rolls back the last in-memory visual edit. |

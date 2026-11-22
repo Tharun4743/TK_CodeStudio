@@ -338,6 +338,45 @@ async function start() {
           const body = JSON.parse(await readBody(req));
           return json(res, 200, save(body));
         }
+        if (req.url === '/__live/upload-asset' && req.method === 'POST') {
+          if (req.headers['x-live-token'] !== token) return json(res, 403, { error: 'bad token' });
+          const raw = JSON.parse(await readBody(req));
+          const name = (raw.name || 'uploaded_image.png').replace(/[^a-zA-Z0-9._-]/g, '_');
+          const ext = path.extname(name) || '.png';
+          const baseName = path.basename(name, ext);
+          const finalName = `${baseName}_${Date.now().toString(36)}${ext}`;
+
+          let destDir = path.join(ROOT, 'public', 'images');
+          let publicUrl = `/images/${finalName}`;
+          if (!fs.existsSync(path.join(ROOT, 'public'))) {
+            if (fs.existsSync(path.join(ROOT, 'src', 'assets'))) {
+              destDir = path.join(ROOT, 'src', 'assets');
+              publicUrl = `/src/assets/${finalName}`;
+            } else if (fs.existsSync(path.join(ROOT, 'assets'))) {
+              destDir = path.join(ROOT, 'assets');
+              publicUrl = `/assets/${finalName}`;
+            } else {
+              destDir = path.join(ROOT, 'public');
+              publicUrl = `/${finalName}`;
+            }
+          }
+          fs.mkdirSync(destDir, { recursive: true });
+          const filePath = path.join(destDir, finalName);
+          const buf = Buffer.from((raw.data || '').replace(/^data:[^;]+;base64,/, ''), 'base64');
+          fs.writeFileSync(filePath, buf);
+          console.log(`  ✓ Asset uploaded: ${path.relative(ROOT, filePath)} -> ${publicUrl}`);
+          return json(res, 200, { ok: true, url: publicUrl, file: path.relative(ROOT, filePath) });
+        }
+        if (req.url.startsWith('/__live/assets/')) {
+          const rel = req.url.slice('/__live/assets/'.length);
+          const full = path.join(ROOT, 'public', rel);
+          if (fs.existsSync(full)) {
+            const ext = path.extname(full).toLowerCase();
+            const ct = ext === '.png' ? 'image/png' : ext === '.jpg' || ext === '.jpeg' ? 'image/jpeg' : ext === '.svg' ? 'image/svg+xml' : ext === '.webp' ? 'image/webp' : 'application/octet-stream';
+            res.writeHead(200, { 'content-type': ct });
+            return res.end(fs.readFileSync(full));
+          }
+        }
         return json(res, 404, { error: 'not found' });
       } catch (e) { return json(res, 500, { error: String(e.message || e) }); }
     }
@@ -415,8 +454,24 @@ function save(body) {
     }
   }
   for (const o of body.ops || []) {
+    if (o.type === 'asset_swap' && o.oldSrc && o.newSrc) {
+      const r = applyText(o.oldSrc, o.newSrc);
+      if (r.status === 'applied') {
+        applied.push({ old: o.oldSrc, new: o.newSrc, file: r.file, line: r.line });
+        console.log(`  ✓ ${r.file}:${r.line}  asset swap "${o.oldSrc}" -> "${o.newSrc}"`);
+        continue;
+      }
+    }
     q.items.push({ id: stamp(), page: body.page, ...o });
-    const preview = o.type === 'resize' ? `${o.width || ''} × ${o.height || ''}` : (o.text || '');
+    const preview = o.type === 'resize'
+      ? `${o.width || ''} × ${o.height || ''}`
+      : o.type === 'asset_swap'
+      ? `${o.oldSrc || ''} -> ${o.newSrc || ''}`
+      : o.type === 'style'
+      ? `${o.property}=${o.value}`
+      : o.type === 'move'
+      ? `move ${o.direction}`
+      : (o.text || '');
     queued.push({ type: o.type, tag: o.tag, text: preview });
     console.log(`  ⚠ queued ${o.type} <${o.tag}> "${preview.slice(0, 40)}"`);
   }
@@ -567,6 +622,12 @@ function fmt(it) {
   } else if (it.type === 'resize') {
     lines.push(`  resize to: width=${it.width || 'auto'}, height=${it.height || 'auto'}${it.padding ? ', padding=' + it.padding : ''} on <${it.tag}> "${(it.text || '').slice(0, 60)}"`);
     if (it.style) lines.push(`  inline style: ${it.style}`);
+  } else if (it.type === 'asset_swap') {
+    lines.push(`  swap image asset: "${it.oldSrc}" -> "${it.newSrc}" on <${it.tag}>`);
+  } else if (it.type === 'move') {
+    lines.push(`  move element: ${it.direction} ${it.targetSelector || 'sibling'} on <${it.tag}> "${(it.text || '').slice(0, 60)}"`);
+  } else if (it.type === 'style') {
+    lines.push(`  style update: ${it.property}=${it.value} on <${it.tag}> "${(it.text || '').slice(0, 60)}"`);
   } else if (it.type === 'attr') {
     lines.push(`  set ${it.name}=${it.value} on <${it.tag}> "${(it.text || '').slice(0, 60)}"`);
   } else {

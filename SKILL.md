@@ -57,6 +57,9 @@ When the user clicks **Save to code** in the browser, process queued items immed
 | `duplicate` | If component is mapped from an array/JSON, append a clean new entry. If static JSX/HTML, duplicate markup preserving unique keys/ids. |
 | `delete` | Remove the corresponding array item or markup, and clean up unused imports. |
 | `resize` | Apply updated width, height, or padding to the box, input, or button (via inline style or Tailwind utility classes). |
+| `asset_swap` | Update the `src` attribute or background image URL of the target component/markup to the uploaded asset path. |
+| `move` | Reorder elements within the template markup or re-sort mapped array elements in code. |
+| `style` | Apply updated style property (e.g. `color`, `backgroundColor`, `fontSize`) to the target component. |
 | `attr` `disabled` | Toggle `disabled` attribute or the corresponding component prop/state. |
 
 After applying changes:
@@ -76,6 +79,10 @@ After applying changes:
 - **Duplicate**: Clones cards visually in real-time and queues code creation.
 - **Visual Drag Handles (Drag to Resize)**: Drag right, bottom, or corner handles on any box, card, input field, or button with live pixel dimensions tooltip (`240px × 48px`).
 - **Size Dialog & Presets (`Size 📐`)**: Quick dimension controls for boxes (`100%`, `50%`, `380px`, `auto`), input fields, and buttons (`Sm`, `Md`, `Lg`, `Full Width`, or custom).
+- **Move Elements (`Move ↑`, `Move ↓`)**: Reorder buttons, cards, boxes, and form fields up or down within their parent container in real-time.
+- **Color & Palette (`Color 🎨`, `BG 🖌️`)**: Instant swatches (Emerald, White, Slate, Amber, Rose, Violet) and custom hex for text and background colors.
+- **Font & Icon Sizing (`Font 🔤`)**: Interactive `A-` / `A+` buttons and preset typography scales for text and icons.
+- **Drag & Drop Image Asset Swapping (`Replace 📷`)**: Drag any image file from desktop onto an image to auto-upload to project assets and swap `src` in real-time.
 - **Delete**: Removes element visually and queues code removal.
 - **Enable / Disable**: Toggles button disabled states.
 - **Save to code (`Ctrl+S` / `Cmd+S`)**: Commits changes: writes text to files and flushes structural queue.

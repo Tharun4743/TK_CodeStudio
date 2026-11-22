@@ -97,6 +97,8 @@
   const label = el => el.tagName.toLowerCase() + ([...el.classList][0] ? '.' + [...el.classList][0] : '');
   const isButton = el => el.matches('button,[role=button],input[type=submit],input[type=button],a.btn,a[class*=button],a[class*=btn]');
   const isInput = el => el.matches('input,textarea,select');
+  const isImage = el => el.matches('img,picture,image,figure,svg') || (el.style && el.style.backgroundImage && el.style.backgroundImage !== 'none');
+  const isTextElement = el => el.matches('h1,h2,h3,h4,h5,h6,p,span,a,b,strong,i,em,small,sub,sup,label,li,blockquote');
   const sizePill = $('#size-pill');
   let resizing = false;
   const directTexts = el => [...el.childNodes].filter(n => n.nodeType === 3 && n.nodeValue.trim()).map(n => n.nodeValue.trim().replace(/\s+/g, ' '));
@@ -139,11 +141,248 @@
     const add = (name, fn, cls = '') => { const b = document.createElement('button'); b.textContent = name; if (cls) b.className = cls; b.onclick = e => { e.stopPropagation(); fn(); }; tools.appendChild(b); };
     add('Edit text', startEdit);
     add('Size 📐', promptSize);
+    add('Font 🔤', promptFontSize);
+    add('Color 🎨', promptColor);
+    add('BG 🖌️', promptBgColor);
+    add('Move ↑', moveUp);
+    add('Move ↓', moveDown);
+    if (isImage(selected)) add('Replace 📷', promptImageUpload);
     add('Parent ↑', () => selected.parentElement && selected.parentElement !== document.documentElement && select(selected.parentElement));
     add('Child ↓', () => selected.firstElementChild && select(selected.firstElementChild));
     add('Duplicate', duplicate);
     if (isButton(selected)) add(isDisabled(selected) ? 'Enable' : 'Disable', toggleDisabled);
     add('Delete', del, 'danger');
+  }
+
+  function moveUp() {
+    const el = selected;
+    if (!el || !el.parentElement) return;
+    const prev = el.previousElementSibling;
+    if (!prev) return toast('Already first element in its container');
+    const parent = el.parentElement;
+    parent.insertBefore(el, prev);
+    const op = { type: 'move', direction: 'before', targetSelector: cssPath(prev), ...meta(el) };
+    ops.push(op);
+    undoStack.push(() => {
+      parent.insertBefore(prev, el);
+      ops.splice(ops.indexOf(op), 1);
+      refresh();
+    });
+    refresh();
+    toast('Moved element up ↑');
+  }
+
+  function moveDown() {
+    const el = selected;
+    if (!el || !el.parentElement) return;
+    const next = el.nextElementSibling;
+    if (!next) return toast('Already last element in its container');
+    const parent = el.parentElement;
+    parent.insertBefore(next, el);
+    const op = { type: 'move', direction: 'after', targetSelector: cssPath(next), ...meta(el) };
+    ops.push(op);
+    undoStack.push(() => {
+      parent.insertBefore(el, next);
+      ops.splice(ops.indexOf(op), 1);
+      refresh();
+    });
+    refresh();
+    toast('Moved element down ↓');
+  }
+
+  function applyStyle(prop, val, msg) {
+    const el = selected; if (!el) return;
+    const prev = el.style[prop];
+    const prevStyle = el.getAttribute('style') || '';
+    el.style[prop] = val;
+    const op = { type: 'style', property: prop, value: val, style: el.getAttribute('style'), ...meta(el) };
+    ops.push(op);
+    undoStack.push(() => {
+      if (prevStyle) el.setAttribute('style', prevStyle);
+      else el.style[prop] = prev;
+      ops.splice(ops.indexOf(op), 1);
+      refresh();
+    });
+    refresh();
+    if (msg) toast(`🎨 ${msg}`);
+  }
+
+  function promptColor() {
+    if (!selected) return;
+    const cur = selected.style.color || window.getComputedStyle(selected).color;
+    const choice = prompt(
+      `Set Text Color (Current: ${cur}):\n` +
+      `1 = White (#ffffff)\n` +
+      `2 = Dark Charcoal (#0f172a)\n` +
+      `3 = Emerald Green (#10b981)\n` +
+      `4 = Sky Blue (#0284c7)\n` +
+      `5 = Amber Gold (#f59e0b)\n` +
+      `6 = Rose Red (#ef4444)\n` +
+      `7 = Violet (#8b5cf6)\n` +
+      `Or enter any Hex/RGB (e.g. "#10b981"):`,
+      '#10b981'
+    );
+    if (!choice) return;
+    const map = {
+      '1': '#ffffff', '2': '#0f172a', '3': '#10b981', '4': '#0284c7',
+      '5': '#f59e0b', '6': '#ef4444', '7': '#8b5cf6'
+    };
+    const newColor = map[choice.trim()] || choice.trim();
+    applyStyle('color', newColor, `Text color set to ${newColor}`);
+  }
+
+  function promptBgColor() {
+    if (!selected) return;
+    const cur = selected.style.backgroundColor || window.getComputedStyle(selected).backgroundColor;
+    const choice = prompt(
+      `Set Background Color (Current: ${cur}):\n` +
+      `1 = Transparent\n` +
+      `2 = Dark Card (#141417)\n` +
+      `3 = Deep Charcoal (#09090b)\n` +
+      `4 = Emerald (#10b981)\n` +
+      `5 = Slate Card (#1e293b)\n` +
+      `6 = Clean White (#ffffff)\n` +
+      `Or enter any Hex/RGB (e.g. "#18181b"):`,
+      '#141417'
+    );
+    if (!choice) return;
+    const map = {
+      '1': 'transparent', '2': '#141417', '3': '#09090b', '4': '#10b981',
+      '5': '#1e293b', '6': '#ffffff'
+    };
+    const newBg = map[choice.trim()] || choice.trim();
+    applyStyle('backgroundColor', newBg, `Background set to ${newBg}`);
+  }
+
+  function promptFontSize() {
+    if (!selected) return;
+    const cur = parseInt(window.getComputedStyle(selected).fontSize) || 16;
+    const choice = prompt(
+      `Adjust Font / Text / Icon Size (Current: ${cur}px):\n` +
+      `1 = A- (-2px -> ${cur - 2}px)\n` +
+      `2 = A+ (+2px -> ${cur + 2}px)\n` +
+      `3 = Small (12px)\n` +
+      `4 = Normal (16px)\n` +
+      `5 = Large (20px)\n` +
+      `6 = Extra Large (28px)\n` +
+      `7 = Huge Headline (40px)\n` +
+      `Or enter custom size (e.g. "24px"):`,
+      `${cur}px`
+    );
+    if (!choice) return;
+    let newSize = '';
+    const c = choice.trim().toLowerCase();
+    if (c === '1' || c === 'a-') newSize = `${Math.max(8, cur - 2)}px`;
+    else if (c === '2' || c === 'a+') newSize = `${cur + 2}px`;
+    else if (c === '3') newSize = '12px';
+    else if (c === '4') newSize = '16px';
+    else if (c === '5') newSize = '20px';
+    else if (c === '6') newSize = '28px';
+    else if (c === '7') newSize = '40px';
+    else newSize = choice.trim();
+    applyStyle('fontSize', newSize, `Size set to ${newSize}`);
+  }
+
+  function promptImageUpload() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = async () => {
+      if (!input.files || !input.files[0]) return;
+      const file = input.files[0];
+      toast('📤 Uploading image asset...', 5000);
+      const reader = new FileReader();
+      reader.onload = async () => {
+        try {
+          const res = await fetch('/__live/upload-asset', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json', 'x-live-token': TOKEN },
+            body: JSON.stringify({ name: file.name, data: reader.result })
+          });
+          const d = await res.json();
+          if (!d.ok) throw new Error(d.error || 'Upload failed');
+          const targetEl = selected;
+          const oldSrc = targetEl.tagName.toLowerCase() === 'img' ? (targetEl.getAttribute('src') || '') : (targetEl.style.backgroundImage || '');
+          const newSrc = d.url;
+          if (targetEl.tagName.toLowerCase() === 'img') targetEl.src = newSrc;
+          else targetEl.style.backgroundImage = `url('${newSrc}')`;
+          const op = { type: 'asset_swap', oldSrc, newSrc, ...meta(targetEl) };
+          ops.push(op);
+          undoStack.push(() => {
+            if (targetEl.tagName.toLowerCase() === 'img') targetEl.src = oldSrc;
+            else targetEl.style.backgroundImage = oldSrc;
+            ops.splice(ops.indexOf(op), 1);
+            refresh();
+          });
+          refresh();
+          toast(`📷 Replaced image with ${d.url}!`);
+        } catch (err) {
+          toast(`❌ Image upload failed: ${err.message}`);
+        }
+      };
+      reader.readAsDataURL(file);
+    };
+    input.click();
+  }
+
+  function initAssetDrop() {
+    window.addEventListener('dragover', e => {
+      if (!on) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'copy';
+      const target = e.target;
+      if (!inUI(target) && target.nodeType === 1) hovered = target;
+    }, true);
+
+    window.addEventListener('drop', async e => {
+      if (!on || inUI(e.target)) return;
+      const files = e.dataTransfer?.files;
+      if (!files || !files.length) return;
+      const file = files[0];
+      if (!file.type.startsWith('image/')) return;
+      e.preventDefault(); e.stopPropagation();
+
+      const targetEl = selected || (e.target && !inUI(e.target) ? e.target : null);
+      if (!targetEl || targetEl === document.body || targetEl === document.documentElement) return;
+
+      toast('📤 Uploading image asset...', 5000);
+      const reader = new FileReader();
+      reader.onload = async () => {
+        try {
+          const res = await fetch('/__live/upload-asset', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json', 'x-live-token': TOKEN },
+            body: JSON.stringify({ name: file.name, data: reader.result })
+          });
+          const d = await res.json();
+          if (!d.ok) throw new Error(d.error || 'Upload failed');
+
+          const oldSrc = targetEl.tagName.toLowerCase() === 'img' ? (targetEl.getAttribute('src') || '') : (targetEl.style.backgroundImage || '');
+          const newSrc = d.url;
+
+          if (targetEl.tagName.toLowerCase() === 'img') {
+            targetEl.src = newSrc;
+          } else {
+            targetEl.style.backgroundImage = `url('${newSrc}')`;
+          }
+
+          const op = { type: 'asset_swap', oldSrc, newSrc, ...meta(targetEl) };
+          ops.push(op);
+          undoStack.push(() => {
+            if (targetEl.tagName.toLowerCase() === 'img') targetEl.src = oldSrc;
+            else targetEl.style.backgroundImage = oldSrc;
+            ops.splice(ops.indexOf(op), 1);
+            refresh();
+          });
+          select(targetEl);
+          refresh();
+          toast(`📷 Replaced image with ${d.url}! Click "Save to code" to persist.`);
+        } catch (err) {
+          toast(`❌ Image upload failed: ${err.message}`);
+        }
+      };
+      reader.readAsDataURL(file);
+    }, true);
   }
 
   function promptSize() {
@@ -436,7 +675,15 @@
     const n = textChanges.size + ops.length;
     $('#count').textContent = n + (n === 1 ? ' change' : ' changes');
     const list = $('#list');
-    list.innerHTML = [...textChanges.values()].map(c => `<div>text: “${esc(c.old)}” → “${esc(c.new)}”</div>`).concat(ops.map(o => `<div>${o.type}: &lt;${o.tag}&gt; ${esc(o.text.slice(0, 40))}${o.type === 'attr' ? ' (' + o.name + '=' + o.value + ')' : ''}</div>`)).join('') || '<div>No pending changes</div>';
+    const opLabel = o => {
+      if (o.type === 'resize') return `resize: &lt;${o.tag}&gt; ${esc(o.width || '')} × ${esc(o.height || '')}`;
+      if (o.type === 'asset_swap') return `image: ${esc(o.newSrc || '')}`;
+      if (o.type === 'move') return `move: &lt;${o.tag}&gt; (${o.direction})`;
+      if (o.type === 'style') return `style: &lt;${o.tag}&gt; ${o.property}=${esc(o.value)}`;
+      if (o.type === 'attr') return `attr: &lt;${o.tag}&gt; ${o.name}=${o.value}`;
+      return `${o.type}: &lt;${o.tag}&gt; ${esc((o.text || '').slice(0, 40))}`;
+    };
+    list.innerHTML = [...textChanges.values()].map(c => `<div>text: “${esc(c.old)}” → “${esc(c.new)}”</div>`).concat(ops.map(o => `<div>${opLabel(o)}</div>`)).join('') || '<div>No pending changes</div>';
     buildTools();
   }
   const esc = s => String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
@@ -516,5 +763,6 @@
     if (e.key === 'Escape' && !editing) select(null);
   }, true);
   initResizeHandles();
+  initAssetDrop();
   refresh();
 })();
