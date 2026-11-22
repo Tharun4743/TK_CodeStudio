@@ -23,7 +23,13 @@
     button:hover{background:#374151}
     button.primary{background:#6366f1;color:#fff}button.primary:hover{background:#4f46e5}
     button.danger:hover{background:#b91c1c}
-    button.on{background:#374151}
+    .mode-toggle{display:flex;align-items:center;gap:6px;font-weight:600;padding:5px 11px;border-radius:6px;transition:all .15s ease}
+    .mode-toggle.on{background:#059669;color:#fff}
+    .mode-toggle.on:hover{background:#047857}
+    .mode-toggle.off{background:#374151;color:#9ca3af}
+    .mode-toggle.off:hover{background:#4b5563;color:#f3f4f6}
+    .mode-dot{width:8px;height:8px;border-radius:50%;background:#34d399;box-shadow:0 0 8px #34d399;transition:all .15s ease}
+    .mode-toggle.off .mode-dot{background:#6b7280;box-shadow:none}
     #main{left:50%;bottom:18px;transform:translateX(-50%);align-items:center;padding:5px 6px}
     .sep{width:1px;background:#374151;margin:2px 2px}
     #count{color:#9ca3af;font-size:12px;padding:0 6px}
@@ -41,7 +47,7 @@
   <div id="result"></div>
   <div id="toast"></div>
   <div id="main" class="bar">
-    <button id="toggle" class="on">Live: on</button><span class="sep"></span>
+    <button id="toggle" class="mode-toggle on" title="Toggle Edit Mode (Alt+E)"><span class="mode-dot"></span><span id="toggle-label">Edit: ON</span></button><span class="sep"></span>
     <button id="undo">Undo</button>
     <button id="cnt"><span id="count">0 changes</span></button><span class="sep"></span>
     <button id="save" class="primary">Save to code</button>
@@ -278,11 +284,36 @@
   }
   try { const s = JSON.parse(sessionStorage.getItem('__liveLast') || 'null'); if (s && Date.now() - s.t < 120000) showResult(s.d); } catch {}
 
+  function setEditMode(state) {
+    on = Boolean(state);
+    const btn = $('#toggle');
+    const lbl = $('#toggle-label');
+    btn.classList.toggle('on', on);
+    btn.classList.toggle('off', !on);
+    if (lbl) lbl.textContent = on ? 'Edit: ON' : 'Edit: OFF';
+    if (!on) {
+      select(null);
+      hovered = null;
+      hoverBox.style.display = 'none';
+      selBox.style.display = 'none';
+      tagEl.style.display = 'none';
+      tools.style.display = 'none';
+      toast('👁️ Browse Mode (Edit OFF) — Clicks navigate normally. Press Alt+E to edit.', 2500);
+    } else {
+      toast('✏️ Edit Mode ON — Click or double-click elements to edit. Press Alt+E to browse.', 2500);
+    }
+  }
+
   $('#save').onclick = save;
   $('#undo').onclick = () => { const f = undoStack.pop(); if (f) { f(); refresh(); } };
   $('#cnt').onclick = () => { const l = $('#list'); l.style.display = l.style.display === 'block' ? 'none' : 'block'; };
-  $('#toggle').onclick = e => { on = !on; e.target.textContent = 'Live: ' + (on ? 'on' : 'off'); e.target.classList.toggle('on', on); if (!on) { select(null); hovered = null; } };
+  $('#toggle').onclick = () => setEditMode(!on);
   document.addEventListener('keydown', e => {
+    if ((e.altKey && (e.key === 'e' || e.key === 'E')) || (e.ctrlKey && e.shiftKey && (e.key === 'e' || e.key === 'E'))) {
+      e.preventDefault();
+      setEditMode(!on);
+      return;
+    }
     if ((e.metaKey || e.ctrlKey) && e.key === 's') { e.preventDefault(); save(); }
     if ((e.metaKey || e.ctrlKey) && e.key === 'z' && !editing) { e.preventDefault(); $('#undo').click(); }
     if (e.key === 'Escape' && !editing) select(null);

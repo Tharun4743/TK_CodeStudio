@@ -61,6 +61,7 @@ After applying changes:
 
 ## 🖱️ In-Browser Visual Overlay Features
 
+- **Edit Mode ON / OFF Toggle (`Alt+E`)**: Glowing green switch in the floating dock or keyboard shortcut (`Alt+E`) to toggle between live editing mode and normal interactive browsing without click interference.
 - **Hover**: Highlights element boundaries and displays tag name.
 - **Click**: Selects element and opens floating action toolbar.
 - **Double-Click**: Inline text editing (`Enter` commits visual draft, `Esc` cancels).

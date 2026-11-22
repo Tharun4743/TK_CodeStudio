@@ -1,6 +1,20 @@
+<p align="center">
+  <img src="assets/banner.jpg" alt="TK Code Studio — One Skill. Every IDE." width="100%">
+</p>
+
 # ⚡ TK Code Studio
 
 **Visual, in-browser live editing studio for local web applications — wired directly to your source code and AI coding agent.**
+
+---
+
+## 🎬 Live Demo
+
+<p align="center">
+  <video src="assets/demo.mp4" width="100%" controls autoplay loop muted></video>
+</p>
+
+> 💡 **Watch TK Code Studio in Action:** Edit text directly on the page, reorder cards visually, and press <kbd>Ctrl + S</kbd> to persist changes instantly to your source code.
 
 ---
 

@@ -19,6 +19,16 @@ import { fileURLToPath } from 'node:url';
 
 const __dir = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = process.cwd();
+
+// Prioritize local node_modules/.bin in PATH for all spawned commands
+process.env.PATH = path.join(ROOT, 'node_modules', '.bin') + path.delimiter + process.env.PATH;
+
+process.on('uncaughtException', err => {
+  console.warn('[TK Studio Warning]', err.message);
+});
+process.on('unhandledRejection', err => {
+  console.warn('[TK Studio Warning]', err?.message || err);
+});
 const LIVE_DIR = path.join(ROOT, '.live');
 const QUEUE = path.join(LIVE_DIR, 'pending.json');
 const SKIP = new Set(['node_modules', '.git', 'dist', 'build', '.next', '.nuxt', '.svelte-kit', '.live', '.agent', '.vercel', '.turbo', 'coverage', 'out']);
@@ -32,54 +42,48 @@ const flag = (n, d) => { const i = argv.indexOf('--' + n); return i > -1 ? argv[
 function generateBatFile() {
   const batPath = path.join(ROOT, 'run_tk_studio.bat');
   const batContent = `@echo off
-setlocal enabledelayedexpansion
+setlocal
 title TK Code Studio - Auto Launcher
+color 0B
+
+cd /d "%~dp0"
 
 echo ===================================================
-echo           ⚡ TK CODE STUDIO - AUTO LAUNCHER
+echo           TK CODE STUDIO - AUTO LAUNCHER
 echo ===================================================
+echo.
 
-:: Check if Node is installed
 where node >nul 2>&1
-if %errorlevel% neq 0 (
+if errorlevel 1 (
     echo [ERROR] Node.js is not found in PATH. Please install Node.js 18+.
     pause
     exit /b 1
 )
 
-:: Locate live.mjs script
+set "PATH=%~dp0node_modules\\.bin;%PATH%"
+
 set "SCRIPT_PATH="
 if exist ".agent\\skills\\tk_code_studio\\scripts\\live.mjs" (
     set "SCRIPT_PATH=.agent\\skills\\tk_code_studio\\scripts\\live.mjs"
-) else if exist ".agent\\skills\\tk-code-studio\\scripts\\live.mjs" (
-    set "SCRIPT_PATH=.agent\\skills\\tk-code-studio\\scripts\\live.mjs"
 ) else if exist "scripts\\live.mjs" (
     set "SCRIPT_PATH=scripts\\live.mjs"
-) else if exist "%~dp0scripts\\live.mjs" (
-    set "SCRIPT_PATH=%~dp0scripts\\live.mjs"
-) else if exist "%USERPROFILE%\\.gemini\\config\\skills\\tk_code_studio\\scripts\\live.mjs" (
-    set "SCRIPT_PATH=%USERPROFILE%\\.gemini\\config\\skills\\tk_code_studio\\scripts\\live.mjs"
-) else if exist "%USERPROFILE%\\.gemini\\config\\skills\\tk-code-studio\\scripts\\live.mjs" (
-    set "SCRIPT_PATH=%USERPROFILE%\\.gemini\\config\\skills\\tk-code-studio\\scripts\\live.mjs"
 )
 
 if "%SCRIPT_PATH%"=="" (
     echo [ERROR] Could not find live.mjs script.
-    echo Please make sure TK Code Studio is installed.
     pause
     exit /b 1
 )
 
-:: Start TK Code Studio proxy
 echo [*] Starting TK Code Studio on port 4743...
 node "%SCRIPT_PATH%" start %*
 
-if %errorlevel% neq 0 (
+if errorlevel 1 (
     echo.
-    echo [!] TK Code Studio stopped with exit code %errorlevel%.
+    echo [!] TK Code Studio stopped.
     pause
 )
-`;
+`.replace(/\r?\n/g, '\r\n');
   try {
     fs.writeFileSync(batPath, batContent);
     console.log(`  ✓ Auto-generated runner: ${path.relative(ROOT, batPath)}`);
@@ -258,28 +262,8 @@ function json(res, code, obj) {
   res.end(JSON.stringify(obj));
 }
 
-function isLiveStudioRunning(p) {
-  return new Promise(resolve => {
-    const q = http.get({ hostname: '127.0.0.1', port: p, path: '/__live/client.js', timeout: 500 }, res => {
-      res.resume();
-      resolve(res.statusCode === 200);
-    });
-    q.on('error', () => resolve(false));
-    q.on('timeout', () => { q.destroy(); resolve(false); });
-  });
-}
-
 async function start() {
-  let port = Number(flag('port', 4743));
-
-  // If TK Code Studio is already running, keep existing port and open browser
-  if (await isLiveStudioRunning(port)) {
-    console.log(`\n  ⚡ TK Code Studio is already active on http://localhost:${port} (keeping existing port)`);
-    console.log(`  Opening browser...\n`);
-    openBrowser(`http://localhost:${port}`);
-    return;
-  }
-
+  const port = Number(flag('port', 4743));
   const target = flag('target') || await detectTarget();
   if (!target) { console.error('No dev server found. Start it first, or pass --target http://localhost:PORT'); process.exit(1); }
   const T = new URL(target);
@@ -341,14 +325,12 @@ async function start() {
     socket.on('error', () => up.destroy());
   });
 
-  server.on('error', (err) => {
+  server.on('error', err => {
     if (err.code === 'EADDRINUSE') {
-      const nextPort = port + 1;
-      console.log(`  ! Port ${port} is in use. Retrying on port ${nextPort}...`);
-      port = nextPort;
-      server.listen(port, '127.0.0.1');
+      console.warn(`\n  [!] Port ${port} is already running TK Code Studio. Opening browser at http://localhost:${port}...`);
+      openBrowser(`http://localhost:${port}`);
     } else {
-      console.error('Proxy server error:', err);
+      console.error('  Server error:', err.message);
     }
   });
 
@@ -396,19 +378,16 @@ function scanPort(p) {
 }
 
 async function scanPorts() {
-  const ports = [3000, 5173, 5174, 8080, 3001, 4200, 8000, 5500, 1313];
+  const ports = [5173, 3000, 5174, 8080, 3001, 4200, 8000, 5500, 1313];
   const myPort = Number(flag('port', 4743));
   for (const p of ports) {
     if (p === myPort) continue;
-    if (await scanPort(p)) {
-      console.log(`  ✓ Project is already running on port ${p} (keeping existing port http://127.0.0.1:${p})`);
-      return `http://127.0.0.1:${p}`;
-    }
+    if (await scanPort(p)) return `http://127.0.0.1:${p}`;
   }
   return null;
 }
 
-function createStaticDevServer(rootDir, defaultPort = 3000) {
+function createStaticDevServer(rootDir) {
   const mimeTypes = {
     '.html': 'text/html; charset=utf-8',
     '.htm': 'text/html; charset=utf-8',
@@ -465,19 +444,10 @@ function createStaticDevServer(rootDir, defaultPort = 3000) {
   });
 
   return new Promise((resolve) => {
-    server.listen(defaultPort, '127.0.0.1', () => {
-      console.log(`  📦 Project not started. Started built-in server on default port http://127.0.0.1:${defaultPort}`);
-      resolve(`http://127.0.0.1:${defaultPort}`);
-    }).on('error', (err) => {
-      if (err.code === 'EADDRINUSE') {
-        server.listen(0, '127.0.0.1', () => {
-          const p = server.address().port;
-          console.log(`  📦 Default port ${defaultPort} busy. Started built-in server on http://127.0.0.1:${p}`);
-          resolve(`http://127.0.0.1:${p}`);
-        });
-      } else {
-        console.error('Static server error:', err);
-      }
+    server.listen(0, '127.0.0.1', () => {
+      const p = server.address().port;
+      console.log(`  📦 Built-in static server started on http://127.0.0.1:${p} (serving ${rootDir})`);
+      resolve(`http://127.0.0.1:${p}`);
     });
   });
 }
