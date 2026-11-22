@@ -81,6 +81,15 @@ git clone https://github.com/Tharun4743/TK_CodeStudio.git "%USERPROFILE%\.gemini
 git clone https://github.com/Tharun4743/TK_CodeStudio.git ~/.gemini/config/skills/tk_code_studio
 ```
 
+#### For Claude Code or Cursor:
+```bash
+# Claude Code global skills
+git clone https://github.com/Tharun4743/TK_CodeStudio.git ~/.claude/skills/tk_code_studio
+
+# Cursor / Project-local skills
+git clone https://github.com/Tharun4743/TK_CodeStudio.git .agent/skills/tk_code_studio
+```
+
 ---
 
 ### 📁 Manual Project Integration (Without AI)
@@ -91,9 +100,16 @@ To manually initialize TK Code Studio inside a specific project folder:
 node <path_to_tk_code_studio>/scripts/live.mjs init
 ```
 
-This generates **`run_tk_studio.bat`** in that project root and configures `npm run live`. Launch anytime with:
+This generates **`run_tk_studio.bat`** (Windows) and **`run_tk_studio.sh`** (macOS/Linux) in that project root and configures `npm run live`. Launch anytime with:
 ```bash
+# Windows
 run_tk_studio.bat
+
+# macOS / Linux
+./run_tk_studio.sh
+
+# Or via npm
+npm run live
 ```
 
 ---
@@ -104,6 +120,7 @@ The visual editing overlay lives in an isolated Shadow DOM (`#__live-host`) with
 
 | Action | Control / Shortcut | Description |
 | :--- | :--- | :--- |
+| **Edit Mode ON / OFF** | <kbd>Alt</kbd> + <kbd>E</kbd> | Toggles between live visual editing and native interactive browsing. When OFF, the toolbar collapses to a minimal pill and clicks pass through natively. |
 | **Hover** | Mouse move | Highlights element bounding box and displays HTML tag name. |
 | **Select** | Click element | Activates element and opens the floating context toolbar. |
 | **Inline Edit** | Double-Click | Turns text directly into an editable field. Press <kbd>Enter</kbd> to commit visual draft, <kbd>Esc</kbd> to cancel. |

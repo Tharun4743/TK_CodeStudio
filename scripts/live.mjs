@@ -39,8 +39,10 @@ const argv = process.argv.slice(2);
 const cmd = argv[0];
 const flag = (n, d) => { const i = argv.indexOf('--' + n); return i > -1 ? argv[i + 1] : d; };
 
-function generateBatFile() {
+function generateRunners() {
   const batPath = path.join(ROOT, 'run_tk_studio.bat');
+  const shPath = path.join(ROOT, 'run_tk_studio.sh');
+
   const batContent = `@echo off
 setlocal
 title TK Code Studio - Auto Launcher
@@ -67,10 +69,19 @@ if exist ".agent\\skills\\tk_code_studio\\scripts\\live.mjs" (
     set "SCRIPT_PATH=.agent\\skills\\tk_code_studio\\scripts\\live.mjs"
 ) else if exist "scripts\\live.mjs" (
     set "SCRIPT_PATH=scripts\\live.mjs"
+) else if exist "%USERPROFILE%\\.gemini\\config\\skills\\tk_code_studio\\scripts\\live.mjs" (
+    set "SCRIPT_PATH=%USERPROFILE%\\.gemini\\config\\skills\\tk_code_studio\\scripts\\live.mjs"
+) else if exist "%USERPROFILE%\\.gemini\\antigravity\\skills\\tk_code_studio\\scripts\\live.mjs" (
+    set "SCRIPT_PATH=%USERPROFILE%\\.gemini\\antigravity\\skills\\tk_code_studio\\scripts\\live.mjs"
+) else if exist "%USERPROFILE%\\.claude\\skills\\tk_code_studio\\scripts\\live.mjs" (
+    set "SCRIPT_PATH=%USERPROFILE%\\.claude\\skills\\tk_code_studio\\scripts\\live.mjs"
+) else if exist "%USERPROFILE%\\.cursor\\skills\\tk_code_studio\\scripts\\live.mjs" (
+    set "SCRIPT_PATH=%USERPROFILE%\\.cursor\\skills\\tk_code_studio\\scripts\\live.mjs"
 )
 
 if "%SCRIPT_PATH%"=="" (
     echo [ERROR] Could not find live.mjs script.
+    echo Please ensure TK Code Studio is installed in your project or global skills directory.
     pause
     exit /b 1
 )
@@ -84,11 +95,54 @@ if errorlevel 1 (
     pause
 )
 `.replace(/\r?\n/g, '\r\n');
+
+  const shContent = `#!/usr/bin/env bash
+cd "$(dirname "$0")" || exit 1
+export PATH="$(pwd)/node_modules/.bin:$PATH"
+
+if ! command -v node >/dev/null 2>&1; then
+    echo "[ERROR] Node.js is not found in PATH. Please install Node.js 18+."
+    exit 1
+fi
+
+SCRIPT_PATH=""
+if [ -f ".agent/skills/tk_code_studio/scripts/live.mjs" ]; then
+    SCRIPT_PATH=".agent/skills/tk_code_studio/scripts/live.mjs"
+elif [ -f "scripts/live.mjs" ]; then
+    SCRIPT_PATH="scripts/live.mjs"
+elif [ -f "$HOME/.gemini/config/skills/tk_code_studio/scripts/live.mjs" ]; then
+    SCRIPT_PATH="$HOME/.gemini/config/skills/tk_code_studio/scripts/live.mjs"
+elif [ -f "$HOME/.gemini/antigravity/skills/tk_code_studio/scripts/live.mjs" ]; then
+    SCRIPT_PATH="$HOME/.gemini/antigravity/skills/tk_code_studio/scripts/live.mjs"
+elif [ -f "$HOME/.claude/skills/tk_code_studio/scripts/live.mjs" ]; then
+    SCRIPT_PATH="$HOME/.claude/skills/tk_code_studio/scripts/live.mjs"
+elif [ -f "$HOME/.cursor/skills/tk_code_studio/scripts/live.mjs" ]; then
+    SCRIPT_PATH="$HOME/.cursor/skills/tk_code_studio/scripts/live.mjs"
+fi
+
+if [ -z "$SCRIPT_PATH" ]; then
+    echo "[ERROR] Could not find live.mjs script."
+    echo "Please ensure TK Code Studio is installed in your project or global skills directory."
+    exit 1
+fi
+
+echo "[*] Starting TK Code Studio on port 4743..."
+exec node "$SCRIPT_PATH" start "$@"
+`.replace(/\r\n/g, '\n');
+
   try {
     fs.writeFileSync(batPath, batContent);
-    console.log(`  ✓ Auto-generated runner: ${path.relative(ROOT, batPath)}`);
+    console.log(`  ✓ Auto-generated Windows runner: ${path.relative(ROOT, batPath)}`);
   } catch (err) {
     console.warn(`  ! could not create bat file: ${err.message}`);
+  }
+
+  try {
+    fs.writeFileSync(shPath, shContent);
+    try { fs.chmodSync(shPath, 0o755); } catch {}
+    console.log(`  ✓ Auto-generated Unix runner: ${path.relative(ROOT, shPath)}`);
+  } catch (err) {
+    console.warn(`  ! could not create sh file: ${err.message}`);
   }
 }
 
@@ -337,7 +391,7 @@ async function start() {
   server.listen(port, '127.0.0.1', () => {
     console.log(`\n  ⚡ TK Code Studio ready\n  open  http://localhost:${port}   (proxying ${target})\n  edits write to: ${ROOT}\n`);
     if (!fs.existsSync(path.join(ROOT, 'run_tk_studio.bat')) && !fs.existsSync(path.join(ROOT, 'run-tk-studio.bat'))) {
-      generateBatFile();
+      generateRunners();
     }
     openBrowser(`http://localhost:${port}`);
   });
@@ -526,7 +580,14 @@ async function main() {
     const dest = path.join(ROOT, '.agent', 'skills', 'tk_code_studio');
     if (path.resolve(skillDir) !== path.resolve(dest)) {
       fs.mkdirSync(path.dirname(dest), { recursive: true });
-      fs.cpSync(skillDir, dest, { recursive: true });
+      fs.cpSync(skillDir, dest, {
+        recursive: true,
+        filter: (src) => {
+          const base = path.basename(src);
+          if (['.git', 'node_modules', '.live', 'assets', '.DS_Store', 'Thumbs.db', 'run_tk_studio.bat', 'run_tk_studio.sh', 'index.html'].includes(base)) return false;
+          return true;
+        }
+      });
       console.log('installed skill ->', path.relative(ROOT, dest));
     }
     const pj = path.join(ROOT, 'package.json');
@@ -540,8 +601,8 @@ async function main() {
     const gi = path.join(ROOT, '.gitignore');
     const cur = fs.existsSync(gi) ? fs.readFileSync(gi, 'utf8') : '';
     if (!/^\.live\/?$/m.test(cur)) fs.appendFileSync(gi, (cur.endsWith('\n') || !cur ? '' : '\n') + '.live/\n');
-    generateBatFile();
-    console.log('⚡ TK Code Studio initialized. Run run_tk_studio.bat or: npm run live');
+    generateRunners();
+    console.log('⚡ TK Code Studio initialized. Run run_tk_studio.bat, ./run_tk_studio.sh, or: npm run live');
   } else if (cmd === 'start') {
     await start();
   } else if (cmd === 'pending') {
