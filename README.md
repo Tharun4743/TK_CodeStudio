@@ -159,11 +159,14 @@ The visual editing overlay lives in an isolated Shadow DOM (`#__live-host`) with
 | **Hover** | Mouse move | Highlights element bounding box and displays HTML tag name. |
 | **Select** | Click element | Activates element, displays live dimensions in dock, and opens context toolbar. |
 | **Inline Edit** | Double-Click | Turns text directly into an editable field. Press <kbd>Enter</kbd> to commit visual draft, <kbd>Esc</kbd> to cancel. |
-| **Dynamic Text Color** | <kbd>Color 🎨</kbd> / <kbd>Alt</kbd> + <kbd>K</kbd> | Opens interactive dynamic HTML5 color wheel with real-time DOM spectrum preview. |
+| **Interactive Sizing Sliders** | <kbd>Size & Sliders</kbd> / <kbd>Alt</kbd> + <kbd>R</kbd> | Opens dual interactive slider popover for separate Horizontal (Width) and Vertical (Height) sizing, 1:1 Aspect Ratio lock toggle, +/- step buttons, and quick presets. |
+| **Dynamic Color Spectrum** | <kbd>Color 🎨</kbd> / <kbd>Alt</kbd> + <kbd>K</kbd> | Opens interactive dynamic HTML5 color wheel. Synchronizes `color`, `stroke`, `fill`, and internal paths with zero CSS leakage. |
 | **Dynamic Background** | <kbd>BG 🖌️</kbd> / <kbd>Alt</kbd> + <kbd>B</kbd> | Opens interactive dynamic background color spectrum picker. |
-| **Font & Icon Size** | <kbd>Font 🔤</kbd> button | <kbd>A-</kbd> / <kbd>A+</kbd> fine adjustments or preset typography scales (12px to 40px) for text and icons. |
-| **Drag Resize** | Drag Handles on Box | Drag right, bottom, or corner handles on any box, card, input field, or button with live pixel tooltip. |
-| **Size & Presets** | <kbd>Size 📐</kbd> / <kbd>Alt</kbd> + <kbd>R</kbd> | Set instant presets for buttons/inputs (`Sm`, `Md`, `Lg`, `100%`) or box containers (`100%`, `50%`, `380px`, `auto`). |
+| **Icon Stroke Width** | <kbd>Stroke 📏</kbd> button | Adjust line thickness on SVG icons (1px thin, 1.5px clean, 2px medium, 2.5px bold, 3px heavy). |
+| **Icon Rotate & Flip** | <kbd>Rotate 🔄</kbd> button | Rotate icons (90°, 180°, 270°) or flip horizontally/vertically in real time. |
+| **Icon Swapping** | <kbd>Swap Icon 📷</kbd> button | Replace any icon with popular presets (Check, Close, Search, Bell, User, Refresh, Trash, Arrow), upload custom SVG/PNG, or paste raw SVG. |
+| **Font Size & Scales** | <kbd>Font 🔤</kbd> button | <kbd>A-</kbd> / <kbd>A+</kbd> fine adjustments or preset typography scales (12px to 40px) for text. |
+| **Drag Resize** | Drag Handles on Box | Drag right, bottom, or corner handles on any box, card, input field, or button with live pixel tooltip. Icons automatically maintain 1:1 ratio. |
 | **Move Elements** | <kbd>Alt</kbd> + <kbd>↑</kbd> / <kbd>Alt</kbd> + <kbd>↓</kbd> | Reorder buttons, inputs, cards, or boxes before or after siblings in real-time. |
 | **Traverse DOM** | <kbd>Alt</kbd> + <kbd>P</kbd> / <kbd>Alt</kbd> + <kbd>C</kbd> | Effortless DOM hierarchy navigation (<kbd>Alt+P</kbd> for Parent, <kbd>Alt+C</kbd> for Child). |
 | **Duplicate** | <kbd>Ctrl</kbd> + <kbd>D</kbd> / <kbd>Cmd</kbd> + <kbd>D</kbd> | Visually clones element in real-time and queues code creation in `.live/pending.json`. |
@@ -171,8 +174,9 @@ The visual editing overlay lives in an isolated Shadow DOM (`#__live-host`) with
 | **Asset Swapping** | Drag & Drop / <kbd>Replace 📷</kbd> | Drag any image file from desktop onto an image to auto-upload to project assets and swap `src`. |
 | **Toggle State** | <kbd>Disable / Enable</kbd> | Toggles button/input `disabled` attribute visually and in queue. |
 | **Undo** | <kbd>Ctrl</kbd> + <kbd>Z</kbd> / <kbd>Cmd</kbd> + <kbd>Z</kbd> | Rolls back the last in-memory visual edit. |
+| **Redo** | <kbd>Ctrl</kbd> + <kbd>Y</kbd> / <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Z</kbd> | Reapplies the last undone visual change forward. |
 | **Save to Code** | <kbd>Ctrl</kbd> + <kbd>S</kbd> / <kbd>Cmd</kbd> + <kbd>S</kbd> | Flushes changes: writes plain text straight to files and triggers queue listener. |
-| **Deselect** | <kbd>Escape</kbd> | Clears active selection and closes toolbars. |
+| **Deselect** | <kbd>Escape</kbd> | Clears active selection and closes toolbars/popovers. |
 
 ---
 

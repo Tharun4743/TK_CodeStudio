@@ -78,19 +78,20 @@ After applying changes:
 - **Hover**: Highlights element boundaries and displays tag name.
 - **Click**: Selects element, displays live dimensions in dock, and opens floating action toolbar.
 - **Smart Component Text Editing**: Click "Edit text" on any card, header, or flex container to auto-target its child texts (with interactive numbered picker if multiple texts exist) or double-click any leaf element for instant inline editing.
+- **Interactive Dual Sizing Sliders (`Size & Sliders ⚡` / `Alt+R`)**: Separate interactive sliders for Horizontal (Width) and Vertical (Height) sizing, 1:1 Aspect Ratio lock toggle, single-pixel step buttons (`-` / `+`), and instant dimension pills.
+- **Anti-Corner Collapse Protection**: SVG icons are safeguarded against flexbox squishing, zero-width collapse, and accidental child shape selection, completely eliminating the corner-merging bug.
+- **Icon Customization Engine**: Adjust stroke width (`Stroke 📏`: 1px to 3px), rotate / flip (`Rotate 🔄`), and swap icons with SVG presets, local uploads, or raw SVG code (`Swap Icon 📷`).
 - **DOM Hierarchy Navigation (`Alt+P` / `Alt+C`)**: Parent ↑ and Child ↓ shortcuts to navigate containers, grids, or nested wrappers.
 - **Duplicate (`Ctrl+D` / `Cmd+D`)**: Clones cards visually in real-time and queues code creation.
 - **Visual Drag Handles (Drag to Resize)**: Drag right, bottom, or corner handles on any box, card, input field, or button with live pixel dimensions tooltip (`240px × 48px`).
-- **Size Dialog & Presets (`Size 📐` / `Alt+R`)**: Quick dimension controls for boxes (`100%`, `50%`, `380px`, `auto`), input fields, and buttons (`Sm`, `Md`, `Lg`, `Full Width`, or custom).
 - **Move Elements (`Alt+↑` / `Alt+↓`)**: Reorder buttons, cards, boxes, and form fields up or down within their parent container in real-time.
-- **Dynamic Color Wheel (`Color 🎨` / `Alt+K`, `BG 🖌️` / `Alt+B`)**: Native HTML5 color spectrum picker with eyedropper support and instant real-time live preview for text and background colors.
-- **Font & Icon Sizing (`Font 🔤`)**: Interactive `A-` / `A+` buttons and preset typography scales for text and icons.
+- **Dynamic Color Wheel (`Color 🎨` / `Alt+K`, `BG 🖌️` / `Alt+B`)**: Native HTML5 color spectrum picker with eyedropper support and instant real-time live preview for text, SVG stroke, fill, and background colors.
 - **Drag & Drop Image Asset Swapping (`Replace 📷`)**: Drag any image file from desktop onto an image to auto-upload to project assets and swap `src` in real-time.
 - **Delete (`Delete` / `Backspace`)**: Removes element visually and queues code removal.
 - **Enable / Disable**: Toggles button disabled states.
-- **Undo (`Ctrl+Z` / `Cmd+Z`)**: Instantly rolls back the last in-memory visual edit.
+- **Bidirectional Undo & Redo**: Undo with <kbd>Ctrl+Z</kbd> / <kbd>Cmd+Z</kbd>, Redo with <kbd>Ctrl+Y</kbd> / <kbd>Ctrl+Shift+Z</kbd> / <kbd>Cmd+Shift+Z</kbd>, or dedicated dock buttons.
 - **Save to code (`Ctrl+S` / `Cmd+S`)**: Commits changes: writes text to files and flushes structural queue.
-- **Deselect (`Escape`)**: Clears active selection and closes toolbars.
+- **Deselect (`Escape`)**: Clears active selection and closes toolbars and popovers.
 
 ---
 

@@ -3,7 +3,7 @@
 //
 // Commands:
 //   init                      install into .agent/skills/tk_code_studio, create run_tk_studio.bat
-//   start [--target URL] [--port 4321]
+//   start [--target URL] [--port N]
 //   wait [--timeout 600]      block until the browser queues structural changes, print them
 //   pending                   print queued changes
 //   done [id ...]             clear queue items (all if no ids)
@@ -472,6 +472,8 @@ function save(body) {
       ? `${o.width || ''} × ${o.height || ''}`
       : o.type === 'asset_swap'
       ? `${o.oldSrc || ''} -> ${o.newSrc || ''}`
+      : o.type === 'icon_swap'
+      ? 'icon swap'
       : o.type === 'style'
       ? `${o.property}=${o.value}`
       : o.type === 'move'
@@ -494,7 +496,7 @@ function scanPort(p) {
 
 async function scanPorts() {
   const ports = [5173, 3000, 5174, 8080, 3001, 4200, 8000, 5500, 1313];
-  const myPort = Number(flag('port', 4321));
+  const myPort = flag('port') ? Number(flag('port')) : 0;
   for (const p of ports) {
     if (p === myPort) continue;
     if (await scanPort(p)) return `http://127.0.0.1:${p}`;
