@@ -317,21 +317,26 @@ function json(res, code, obj) {
 }
 
 async function start() {
-  const port = Number(flag('port', 4321));
   const target = flag('target') || await detectTarget();
   if (!target) { console.error('No dev server found. Start it first, or pass --target http://localhost:PORT'); process.exit(1); }
   const T = new URL(target);
   const targetHost = T.hostname === 'localhost' ? '127.0.0.1' : T.hostname;
   if (!fs.existsSync(path.join(ROOT, 'package.json'))) console.warn(`  ! no package.json in ${ROOT} — run this from your project root, or edits will not be found.`);
   const token = crypto.randomBytes(16).toString('hex');
-  const clientJs = fs.readFileSync(path.join(__dir, 'client.js'), 'utf8');
+  const port = flag('port') ? Number(flag('port')) : 0; // Dynamic port allocation (no hardcoded default port)
 
   const server = http.createServer(async (req, res) => {
     if (req.url.startsWith('/__live/')) {
       try {
-        if (req.url === '/__live/client.js') {
-          res.writeHead(200, { 'content-type': 'text/javascript', 'cache-control': 'no-store' });
-          return res.end(clientJs);
+        if (req.url.startsWith('/__live/client.js')) {
+          res.writeHead(200, {
+            'content-type': 'text/javascript',
+            'cache-control': 'no-store, no-cache, must-revalidate, max-age=0',
+            'pragma': 'no-cache',
+            'expires': '0'
+          });
+          const freshClientJs = fs.readFileSync(path.join(__dir, 'client.js'), 'utf8');
+          return res.end(freshClientJs);
         }
         if (req.url === '/__live/save' && req.method === 'POST') {
           if (req.headers['x-live-token'] !== token) return json(res, 403, { error: 'bad token' });
@@ -389,7 +394,7 @@ async function start() {
         pr.on('data', c => chunks.push(c));
         pr.on('end', () => {
           let body = Buffer.concat(chunks).toString('utf8');
-          const tag = `<script>window.__LIVE_TOKEN=${JSON.stringify(token)}</script><script src="/__live/client.js"></script>`;
+          const tag = `<script>window.__LIVE_TOKEN=${JSON.stringify(token)}</script><script src="/__live/client.js?v=${Date.now()}"></script>`;
           body = /<\/body>/i.test(body) ? body.replace(/<\/body>/i, () => tag + '</body>') : body + tag;
           const h = { ...pr.headers };
           delete h['content-length']; delete h['content-encoding'];
